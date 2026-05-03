@@ -1,0 +1,303 @@
+// Prisma schema — QApp study-abroad platform
+// SQLite for local dev; swap provider + DATABASE_URL for Postgres in prod.
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ─── Auth.js / NextAuth v5 required tables ───────────────────────────────────
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── Core app models ──────────────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  password      String? // null for OAuth-only users; hashed with bcryptjs
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts             Account[]
+  sessions             Session[]
+  profile              StudentProfile?
+  userUniversities     UserUniversity[]
+  chatSessions         ChatSession[]
+  preferenceCategories UserPreferenceCategory[]
+}
+
+model StudentProfile {
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  fullName       String
+  nationality    String  @default("Kazakhstan")
+  currentCountry String  @default("Kazakhstan")
+  gradeLevel     Int     @default(11)
+  gpa            Float   @default(4.7)
+  gpaScale       Float   @default(5.0)
+  avatarUrl      String?
+
+  // IELTS sub-scores
+  ieltsOverall   Float?
+  ieltsListening Float?
+  ieltsReading   Float?
+  ieltsWriting   Float?
+  ieltsSpeaking  Float?
+  ieltsTakenAt   String?
+
+  // SAT
+  satTotal   Int?
+  satMath    Int?
+  satEbrw    Int?
+  satTakenAt String?
+
+  // JSON arrays serialised as strings (SQLite limitation)
+  interests          String @default("[]") // JSON string[]
+  preferredCountries String @default("[]") // JSON string[]
+
+  preferredStudyLevel String @default("bachelor")
+  budgetUsdPerYear    Int?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  documents StudentDocument[]
+}
+
+model StudentDocument {
+  id        String         @id @default(cuid())
+  profileId String
+  profile   StudentProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  kind       String   @default("other") // DocumentKind
+  fileName   String   @default("")
+  status     String   @default("pending") // DocumentStatus: pending | uploaded | verified | rejected
+  url        String?
+  sizeBytes  Int?
+  uploadedAt DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model University {
+  id           String  @id
+  name         String
+  nameRu       String? // Russian/local name
+  country      String
+  city         String
+  founded      Int?    // founding year
+  type         String? // "Research" | "Technical" | "Liberal Arts"
+  languages    String? // comma-separated instruction languages
+  logoUrl      String?
+  heroImageUrl String?
+  campusPhoto  String? // main campus photo URL
+  websiteUrl   String?
+  contactEmail String?
+  worldRank    Int?
+
+  // Academic entry requirements
+  minGpa   Float?
+  minIelts Float?
+  minSat   Int?
+
+  applicationDeadline String? // main deadline "YYYY-MM-DD"
+  description         String?
+  fitScore            Int     @default(70)
+  recommendationScore Float   @default(0) // RS: per-user AI score (0-100), updated by AI
+
+  // JSON string fields — kept for backward compat with existing UI / API
+  fitScoreBreakdown String?
+  programsJson      String  @default("[]") @map("programs") // JSON IUniversityProgram[]
+  tags              String  @default("[]") // JSON string[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userUniversities UserUniversity[]
+  aiEvaluations    AIFitEvaluation[]
+  programs         Program[]
+  scholarships     Scholarship[]
+  deadlines        Deadline[]
+}
+
+// ─── Relational university data (from SQL import) ───────────────────────────
+
+model Program {
+  id           String @id @default(cuid())
+  universityId String
+
+  name          String
+  field         String? // "Computer Science" | "Engineering" | "Business" | "Science" | "Humanities"
+  degree        String? // "Bachelor" | "Master" | "PhD"
+  duration      Int?    // years
+  language      String?
+  tuitionPerYear Int?
+
+  createdAt DateTime @default(now())
+
+  university University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+
+  @@index([universityId])
+}
+
+model Scholarship {
+  id           String @id @default(cuid())
+  universityId String
+
+  name        String
+  description String?
+  covers      String?
+  eligibility String?
+  minGpa      Float?
+  minIelts    Float?
+
+  createdAt DateTime @default(now())
+
+  university University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+
+  @@index([universityId])
+}
+
+model Deadline {
+  id           String @id @default(cuid())
+  universityId String
+
+  label String?
+  date  String // "YYYY-MM-DD"
+
+  createdAt DateTime @default(now())
+
+  university University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+
+  @@index([universityId])
+}
+
+// Per-user save/hide status for universities
+model UserUniversity {
+  id           String @id @default(cuid())
+  userId       String
+  universityId String
+  status       String // "saved" | "hidden"
+
+  createdAt DateTime @default(now())
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  university University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, universityId])
+}
+
+// Cached AI fit evaluations keyed by (universityId, profileHash)
+model AIFitEvaluation {
+  id           String @id @default(cuid())
+  universityId String
+  profileHash  String // djb2 hash of student profile + preferences — invalidates on change
+  score        Int
+  reasons      String
+  gaps         String
+  source       String @default("mock") // "anthropic" | "mock"
+
+  createdAt DateTime @default(now())
+
+  university University @relation(fields: [universityId], references: [id], onDelete: Cascade)
+
+  @@unique([universityId, profileHash])
+}
+
+// Chat sessions & messages (persisted advisor history)
+model ChatSession {
+  id     String  @id @default(cuid())
+  userId String
+  title  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages ChatMessage[]
+}
+
+model ChatMessage {
+  id        String @id @default(cuid())
+  sessionId String
+  role      String // "user" | "assistant"
+  content   String
+
+  createdAt DateTime @default(now())
+
+  session ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}
+
+// ─── Preference & priority system ────────────────────────────────────────────
+
+// One row per preference dimension the user cares about.
+// categoryKey maps to the PREFERENCE_CATEGORIES config in src/lib/preference-categories.ts
+model UserPreferenceCategory {
+  id          String @id @default(cuid())
+  userId      String
+  categoryKey String // "countries" | "cities" | "fields" | "languages" | "budget" | "rank" | "scholarship" | "studyLevel" | "minGpa"
+  priority    Int    @default(5) // 1-20: importance weight fed to the AI
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  values UserPreferenceValue[]
+
+  @@unique([userId, categoryKey])
+  @@index([userId])
+}
+
+// Individual values within a preference category (e.g. "Germany", "UK" within "countries")
+model UserPreferenceValue {
+  id         String @id @default(cuid())
+  categoryId String
+  value      String
+
+  createdAt DateTime @default(now())
+
+  category UserPreferenceCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+}

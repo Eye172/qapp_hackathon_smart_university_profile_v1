@@ -1,0 +1,179 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: light;
+
+  /* ── Palette ─────────────────────────────────────────────────── */
+  --color-bg:               #f0e8e0;
+  --color-bg-deep:          #e8ddd4;
+  --color-surface:          #ffffff;
+  --color-surface-glass:    rgba(255, 255, 255, 0.50);
+  --color-surface-frosted:  rgba(240, 232, 224, 0.72);
+  --color-accent:           #81583a;
+  --color-accent-secondary: #c2956e;
+  --color-accent-foreground:#ffffff;
+  --color-text:             #1e1a18;
+  --color-muted:            #6b5d52;
+  --color-border:           rgba(129, 88, 58, 0.14);
+  --color-border-strong:    rgba(129, 88, 58, 0.28);
+
+  /* Match / No-match tag colors */
+  --color-tag-match:        rgba(34, 197, 94, 0.18);
+  --color-tag-match-text:   #15803d;
+  --color-tag-no-match:     rgba(239, 68, 68, 0.15);
+  --color-tag-no-match-text:#b91c1c;
+  --color-tag-neutral:      rgba(255, 255, 255, 0.22);
+  --color-tag-neutral-text: #ffffff;
+
+  /* ── Layout ─────────────────────────────────────────────────── */
+  --sidebar-w:   64px;
+
+  /* ── Z-index stack ──────────────────────────────────────────── */
+  --z-card-far:    1;
+  --z-card-near:   2;
+  --z-card-center: 3;
+  --z-sidebar:    40;
+  --z-overlay:    50;
+  --z-modal:      60;
+
+  /* ── Typography ─────────────────────────────────────────────── */
+  --font-sans:    var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-playfair), "Playfair Display", Georgia, serif;
+
+  --text-fluid-xs:      clamp(0.70rem,  0.80vw, 0.813rem);
+  --text-fluid-sm:      clamp(0.813rem, 0.95vw, 0.938rem);
+  --text-fluid-base:    clamp(0.875rem, 1.05vw, 1.063rem);
+  --text-fluid-lg:      clamp(1rem,     1.25vw, 1.25rem);
+  --text-fluid-xl:      clamp(1.25rem,  1.75vw, 1.625rem);
+  --text-fluid-2xl:     clamp(1.75rem,  2.5vw,  2.25rem);
+  --text-fluid-3xl:     clamp(2.25rem,  3.5vw,  3.25rem);
+  --text-fluid-display: clamp(2.75rem,  5vw,    4.5rem);
+
+  /* ── Easing ─────────────────────────────────────────────────── */
+  --ease-snappy:   cubic-bezier(0.20, 0.80, 0.20, 1.00);
+  --ease-carousel: cubic-bezier(0.16, 1.00, 0.30, 1.00);
+  --ease-spring:   cubic-bezier(0.34, 1.56, 0.64, 1.00);
+
+  /* ── Shadows ────────────────────────────────────────────────── */
+  --shadow-glass:
+    0 1px 0 rgba(255,255,255,0.6) inset,
+    0 16px 48px -12px rgba(60,38,22,0.22),
+    0 2px 8px  -2px  rgba(60,38,22,0.10);
+
+  --shadow-card:
+    0 24px 64px -16px rgba(30,16,8,0.28),
+    0 4px  12px -4px  rgba(30,16,8,0.16);
+
+  --shadow-sidebar:
+    4px 0 32px -8px rgba(30,16,8,0.12);
+}
+
+/* ── Tailwind theme bridge ───────────────────────────────────── */
+@theme inline {
+  --color-bg:               var(--color-bg);
+  --color-surface:          var(--color-surface);
+  --color-accent:           var(--color-accent);
+  --color-accent-secondary: var(--color-accent-secondary);
+  --color-text:             var(--color-text);
+  --color-muted:            var(--color-muted);
+  --color-border:           var(--color-border);
+  --font-sans:              var(--font-sans);
+  --font-display:           var(--font-display);
+  --ease-snappy:            var(--ease-snappy);
+  --ease-carousel:          var(--ease-carousel);
+}
+
+/* ── Base ────────────────────────────────────────────────────── */
+html, body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  font-size: var(--text-fluid-base);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Prevent horizontal scroll at root level */
+body { overflow-x: hidden; }
+
+/* ── View transitions ────────────────────────────────────────── */
+@supports (view-transition-name: none) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 360ms;
+    animation-timing-function: var(--ease-snappy);
+  }
+  ::view-transition-old(root) { animation-name: vt-fade-out; }
+  ::view-transition-new(root) { animation-name: vt-fade-in;  }
+}
+
+@keyframes vt-fade-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0);    }
+}
+@keyframes vt-fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* ── Utilities ───────────────────────────────────────────────── */
+@layer utilities {
+  .glass {
+    backdrop-filter: saturate(160%) blur(20px);
+    -webkit-backdrop-filter: saturate(160%) blur(20px);
+    background-color: var(--color-surface-glass);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-glass);
+  }
+
+  .glass-sidebar {
+    backdrop-filter: saturate(180%) blur(24px);
+    -webkit-backdrop-filter: saturate(180%) blur(24px);
+    background: rgba(240, 232, 224, 0.78);
+    border-right: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sidebar);
+  }
+
+  .glass-dark {
+    backdrop-filter: saturate(140%) blur(16px);
+    -webkit-backdrop-filter: saturate(140%) blur(16px);
+    background: rgba(20, 12, 6, 0.55);
+    border: 1px solid rgba(255,255,255,0.10);
+  }
+
+  .card-shadow { box-shadow: var(--shadow-card); }
+
+  .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+  }
+
+  .ease-snappy    { transition-timing-function: var(--ease-snappy);   }
+  .ease-carousel  { transition-timing-function: var(--ease-carousel); }
+  .ease-spring    { transition-timing-function: var(--ease-spring);   }
+
+  /* Hide scrollbar but keep scroll */
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+  /* Thin scrollbar */
+  .scrollbar-thin::-webkit-scrollbar { width: 4px; height: 4px; }
+  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: var(--color-border-strong);
+    border-radius: 9999px;
+  }
+
+  /* Perspective preserve for 3D cards */
+  .perspective-1400 { perspective: 1400px; }
+  .preserve-3d { transform-style: preserve-3d; }
+
+  /* Text gradient */
+  .text-gradient {
+    background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-secondary) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
