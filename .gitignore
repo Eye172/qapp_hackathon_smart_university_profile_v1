@@ -41,3 +41,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local scripts / temp
+scripts/get-unis.mjs
+scripts/list-unis.mjs
+
+# sqlite db (contains real data, never commit)
+prisma/*.db
+prisma/*.db-journal

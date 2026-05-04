@@ -4,9 +4,9 @@ import * as React from "react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/tailwind-utils";
 
-const COLOR_LOW = "#9E6464";
-const COLOR_MID = "#C2956E";
-const COLOR_HIGH = "#5E7A66";
+const COLOR_LOW = "#ef4444";
+const COLOR_MID = "#f59e0b";
+const COLOR_HIGH = "#2563eb";
 
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
@@ -88,7 +88,7 @@ export const AIFitRing = React.forwardRef<HTMLDivElement, AIFitRingProps>(
             cx={size / 2}
             cy={size / 2}
             r={radius}
-            stroke="rgba(129, 88, 58, 0.12)"
+            stroke="rgba(37, 99, 235, 0.12)"
             strokeWidth={strokeWidth}
             fill="none"
           />

@@ -1,19 +1,19 @@
 import { generateText } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
-import { SYSTEM_EVALUATE_PROMPT } from "@/lib/ai-prompts";
+import { openai } from "@ai-sdk/openai";
 import { MOCK_SESSION_PROFILE } from "@/store/useSessionStore";
 import { db } from "@/lib/db";
 import type { IStudentProfile, IUniversityProfile } from "@/lib/types";
 import type { UserPreferenceData } from "@/lib/preference-categories";
 
+/* ─── Public types ───────────────────────────────────────────────────────── */
 export interface AIFitResult {
   score: number;
   reasons: string;
   gaps: string;
-  source: "anthropic" | "mock";
+  source: "openai" | "mock";
 }
 
-// Deterministic hash for cache keying — includes preferences so priority changes bust the cache
+/* ─── Deterministic profile hash (cache key) ─────────────────────────────── */
 function hashProfile(
   profile: IStudentProfile,
   preferences?: UserPreferenceData[],
@@ -26,14 +26,12 @@ function hashProfile(
     interests: profile.interests,
     budget: profile.budgetUsdPerYear,
     studyLevel: profile.preferredStudyLevel,
-    // Include preferences so changing priorities busts the cache
     prefs: preferences?.map((p) => ({
       key: p.categoryKey,
       pri: p.priority,
       vals: p.values.map((v) => v.value),
     })),
   });
-  // djb2 hash
   let hash = 5381;
   for (let i = 0; i < key.length; i++) {
     hash = ((hash << 5) + hash) ^ key.charCodeAt(i);
@@ -41,6 +39,7 @@ function hashProfile(
   return (hash >>> 0).toString(16);
 }
 
+/* ─── Mock / deterministic fallback ─────────────────────────────────────── */
 function buildMockFit(
   university: IUniversityProfile,
   profile: IStudentProfile,
@@ -54,12 +53,12 @@ function buildMockFit(
       )
     : null;
 
-  // Preference-aware score adjustment (mock mode)
+  // Preference-aware score boost (mock mode)
   let adjustedScore = score;
   if (preferences) {
     const countryPref = preferences.find((p) => p.categoryKey === "countries");
-    const cityPref = preferences.find((p) => p.categoryKey === "cities");
-    const fieldPref = preferences.find((p) => p.categoryKey === "fields");
+    const cityPref    = preferences.find((p) => p.categoryKey === "cities");
+    const fieldPref   = preferences.find((p) => p.categoryKey === "fields");
 
     const countryMatch = countryPref?.values.some(
       (v) => v.value.toLowerCase() === university.country.toLowerCase(),
@@ -73,14 +72,14 @@ function buildMockFit(
       ),
     );
 
-    const countryWeight = (countryPref?.priority ?? 0) / 20;
-    const cityWeight = (cityPref?.priority ?? 0) / 20;
-    const fieldWeight = (fieldPref?.priority ?? 0) / 20;
+    const cW = (countryPref?.priority ?? 0) / 20;
+    const ciW = (cityPref?.priority    ?? 0) / 20;
+    const fW  = (fieldPref?.priority   ?? 0) / 20;
 
     let boost = 0;
-    if (countryMatch) boost += countryWeight * 8;
-    if (cityMatch) boost += cityWeight * 5;
-    if (fieldMatch) boost += fieldWeight * 10;
+    if (countryMatch) boost += cW  * 8;
+    if (cityMatch)    boost += ciW * 5;
+    if (fieldMatch)   boost += fW  * 10;
     adjustedScore = Math.min(100, Math.round(score + boost));
   }
 
@@ -100,6 +99,7 @@ function buildMockFit(
   return { score: adjustedScore, reasons, gaps, source: "mock" };
 }
 
+/* ─── LLM response parser ────────────────────────────────────────────────── */
 function tryParseLLMResponse(
   text: string,
   fallbackScore: number,
@@ -132,7 +132,7 @@ function tryParseLLMResponse(
   }
 }
 
-/** Build the preference-weights context block injected into the Claude prompt */
+/* ─── Preference context block for the Claude prompt ────────────────────── */
 function buildPreferenceContext(preferences: UserPreferenceData[]): string {
   if (!preferences.length) return "";
   const lines = preferences
@@ -142,9 +142,36 @@ function buildPreferenceContext(preferences: UserPreferenceData[]): string {
       return `  - ${p.label} (priority ${p.priority}/20)${vals ? `: ${vals}` : ""}`;
     });
   if (!lines.length) return "";
-  return `\n\nStudent's weighted preferences (higher priority = more important to this student):\n${lines.join("\n")}`;
+  return `\n\nStudent's weighted preferences (higher priority = more important):\n${lines.join("\n")}`;
 }
 
+/* ─── System prompt ──────────────────────────────────────────────────────── */
+const SYSTEM_PROMPT = `You are the QApp University Fit Engine — an admissions intelligence model that scores how well a single applicant matches a single university.
+
+You receive two JSON objects in the user message:
+- "studentProfile": GPA + scale, IELTS sub-scores, SAT (optional), nationality, interests[], preferredCountries[], preferred study level, annual budget USD.
+- "university": name, country, city, world rank, programs[] (level, language, tuitionUsdPerYear, scholarshipAvailable, field), tags[], minGpa, minIelts, minSat.
+
+Respond ONLY with valid JSON in this exact schema:
+{
+  "fitScore": <integer 0–100>,
+  "rationale": "<2–4 sentence narrative explaining the match in plain English, use **bold** for key numbers>",
+  "breakdown": {
+    "academic": <0–100>,
+    "language": <0–100>,
+    "financial": <0–100>,
+    "interest": <0–100>
+  }
+}
+
+Rules:
+- fitScore = weighted average of breakdown axes (academic 35%, language 25%, financial 20%, interest 20%)
+- Be specific: cite actual GPA, IELTS, tuition numbers from the data
+- If the student clearly meets all requirements, fitScore should be 75–95
+- If there are significant gaps, fitScore should be 40–70
+- Respond with JSON only — no markdown code fences, no explanation outside the JSON`;
+
+/* ─── Main export ────────────────────────────────────────────────────────── */
 export async function fetchAIFit(
   university: IUniversityProfile,
   studentProfile: IStudentProfile = MOCK_SESSION_PROFILE,
@@ -152,7 +179,7 @@ export async function fetchAIFit(
 ): Promise<AIFitResult> {
   const profileHash = hashProfile(studentProfile, preferences);
 
-  // --- Check DB cache first ---
+  // Check DB cache
   const cached = await db.aIFitEvaluation
     .findUnique({
       where: {
@@ -163,46 +190,42 @@ export async function fetchAIFit(
 
   if (cached) {
     return {
-      score: cached.score,
+      score:   cached.score,
       reasons: cached.reasons,
-      gaps: cached.gaps,
-      source: cached.source as AIFitResult["source"],
+      gaps:    cached.gaps,
+      source:  cached.source as AIFitResult["source"],
     };
   }
 
-  // --- Compute ---
+  // Compute
   let result: AIFitResult;
-
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  const modelId = process.env.ANTHROPIC_MODEL ?? "claude-sonnet-4-5";
+  const apiKey = process.env.OPENAI_API_KEY;
+  const modelId = process.env.OPENAI_MODEL ?? "gpt-4o-mini";
 
   if (!apiKey) {
     await new Promise((r) => setTimeout(r, 400));
     result = buildMockFit(university, studentProfile, preferences);
   } else {
     try {
-      const preferenceContext = preferences
-        ? buildPreferenceContext(preferences)
-        : "";
-
+      const preferenceContext = preferences ? buildPreferenceContext(preferences) : "";
       const llmResult = await generateText({
-        model: anthropic(modelId),
-        system: SYSTEM_EVALUATE_PROMPT + preferenceContext,
+        model: openai(modelId),
+        system: SYSTEM_PROMPT + preferenceContext,
         prompt: JSON.stringify({ studentProfile, university }),
         temperature: 0.15,
       });
 
       const parsed = tryParseLLMResponse(llmResult.text, university.fitScore);
       result = parsed
-        ? { ...parsed, source: "anthropic" }
+        ? { ...parsed, source: "openai" }
         : buildMockFit(university, studentProfile, preferences);
     } catch (err) {
-      console.error("[AI Fit] Claude error:", err);
+      console.error("[AI Fit] OpenAI error:", err);
       result = buildMockFit(university, studentProfile, preferences);
     }
   }
 
-  // --- Persist to cache ---
+  // Persist to cache
   await db.aIFitEvaluation
     .upsert({
       where: {
@@ -211,15 +234,15 @@ export async function fetchAIFit(
       create: {
         universityId: university.id,
         profileHash,
-        score: result.score,
+        score:  result.score,
         reasons: result.reasons,
-        gaps: result.gaps,
+        gaps:   result.gaps,
         source: result.source,
       },
       update: {
-        score: result.score,
+        score:  result.score,
         reasons: result.reasons,
-        gaps: result.gaps,
+        gaps:   result.gaps,
         source: result.source,
       },
     })

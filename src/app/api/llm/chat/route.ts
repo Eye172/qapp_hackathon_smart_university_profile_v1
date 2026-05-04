@@ -1,6 +1,6 @@
 import { streamText, convertToModelMessages, type UIMessage } from "ai";
-import { anthropic } from "@ai-sdk/anthropic";
-import { SYSTEM_CHAT_PROMPT } from "@/lib/ai-prompts";
+import { openai } from "@ai-sdk/openai";
+import { ADVISOR_CHAT_SYSTEM_PROMPT } from "@/lib/ai/prompts";
 
 export const runtime = "edge";
 export const maxDuration = 30;
@@ -28,8 +28,8 @@ export async function POST(req: Request): Promise<Response> {
   }
 
   const result = streamText({
-    model: anthropic("claude-sonnet-4-6"),
-    system: SYSTEM_CHAT_PROMPT,
+    model: openai("gpt-4o"),
+    system: ADVISOR_CHAT_SYSTEM_PROMPT,
     messages: await convertToModelMessages(body.messages),
     temperature: 0.6,
   });

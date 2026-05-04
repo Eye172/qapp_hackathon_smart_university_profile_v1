@@ -197,22 +197,23 @@ export function StepTags({
                     transition={{ duration: 0.25, ease: [0.2, 0.8, 0.2, 1] }}
                     className="overflow-hidden"
                   >
-                    <div className="px-4 pb-3 flex gap-2">
-                      {/* Example chips */}
-                      {cfg.examples && inputVal === "" && (
-                        <div className="flex flex-wrap gap-1 mr-1">
-                          {cfg.examples.map((ex) => (
-                            <button
-                              key={ex}
-                              type="button"
-                              onClick={() => setInputValues((p) => ({ ...p, [cfg.key]: ex }))}
-                              className="text-[10px] text-[color:var(--color-muted)] border border-[color:var(--color-border)] rounded-full px-2 py-0.5 hover:border-[color:var(--color-accent)]/50 hover:text-[color:var(--color-accent)] transition-colors duration-150"
-                            >
-                              {ex}
-                            </button>
-                          ))}
-                        </div>
-                      )}
+                    {/* Example chips — own row so they never push input/button off-screen */}
+                    {cfg.examples && inputVal === "" && (
+                      <div className="flex flex-wrap gap-1 px-4 pb-2">
+                        {cfg.examples.map((ex) => (
+                          <button
+                            key={ex}
+                            type="button"
+                            onClick={() => setInputValues((p) => ({ ...p, [cfg.key]: ex }))}
+                            className="text-[10px] text-[color:var(--color-muted)] border border-[color:var(--color-border)] rounded-full px-2 py-0.5 hover:border-[color:var(--color-accent)]/50 hover:text-[color:var(--color-accent)] transition-colors duration-150"
+                          >
+                            {ex}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {/* Input + add button — always a clean flex row with no competing siblings */}
+                    <div className="px-4 pb-3 flex gap-2 items-center">
                       <input
                         ref={(el) => { inputRefs.current[cfg.key] = el; }}
                         type={cfg.inputType === "number" ? "number" : "text"}
@@ -227,20 +228,19 @@ export function StepTags({
                           "text-[color:var(--color-text)] placeholder:text-[color:var(--color-muted)]/40 pb-1",
                         )}
                       />
-                      <motion.button
+                      <button
                         type="button"
                         onClick={() => handleAdd(cfg.key)}
                         disabled={busy || !inputVal.trim()}
-                        whileTap={{ scale: 0.92 }}
                         className={cn(
-                          "shrink-0 text-[11px] font-semibold rounded-lg px-3 py-1.5 transition-all duration-150",
+                          "shrink-0 text-[11px] font-semibold rounded-lg px-3 py-1.5 transition-all duration-150 active:scale-95",
                           inputVal.trim()
                             ? "bg-[color:var(--color-accent)] text-white"
                             : "bg-[color:var(--color-border)] text-[color:var(--color-muted)] cursor-not-allowed",
                         )}
                       >
                         {busy ? "…" : "↵"}
-                      </motion.button>
+                      </button>
                     </div>
                   </motion.div>
                 )}

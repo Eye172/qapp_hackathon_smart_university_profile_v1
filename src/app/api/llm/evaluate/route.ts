@@ -1,6 +1,6 @@
 import { streamText } from "ai";
 import { openai } from "@ai-sdk/openai";
-import { SYSTEM_EVALUATE_PROMPT } from "@/lib/ai-prompts";
+import { FIT_SCORE_SYSTEM_PROMPT } from "@/lib/ai/prompts";
 import { fetchUniversityEnrichment } from "@/lib/university-data";
 import type { IStudentProfile, IUniversityProfile } from "@/lib/types";
 
@@ -44,7 +44,7 @@ export async function POST(req: Request): Promise<Response> {
 
   const result = streamText({
     model: openai("gpt-4o-mini"),
-    system: SYSTEM_EVALUATE_PROMPT,
+    system: FIT_SCORE_SYSTEM_PROMPT,
     prompt: JSON.stringify({
       studentProfile: body.studentProfile,
       university: enrichedUniversity,

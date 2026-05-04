@@ -1,11 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { motion, type HTMLMotionProps } from "framer-motion";
+import { motion, type HTMLMotionProps, AnimatePresence } from "framer-motion";
 import type { IUniversityProfile } from "@/lib/types";
-import { ActionButton } from "@/components/ui/button";
 import { AIFitRing } from "@/components/ui/ai-fit-ring";
-import { CheckCircle, ChevronRight, XCircle } from "@/components/ui/icon";
 import { useAlgorithmStore } from "@/store/useAlgorithmStore";
 import { useSessionStore } from "@/store/useSessionStore";
 import { cn } from "@/lib/tailwind-utils";
@@ -87,62 +85,80 @@ function classifyTag(tag: string, university: IUniversityProfile): TagVariant {
   return "neutral";
 }
 
-/* ─── Tag pill component ─────────────────────────────────────────────────── */
-function TagChip({
-  tag,
-  university,
-  className,
-}: {
-  tag: string;
-  university: IUniversityProfile;
-  className?: string;
-}) {
-  const variant = classifyTag(tag, university);
-
-  const styles: Record<TagVariant, string> = {
-    match:
-      "bg-[color:var(--color-tag-match)] text-[color:var(--color-tag-match-text)] border border-[color:var(--color-tag-match-text)]/20",
-    nomatch:
-      "bg-[color:var(--color-tag-no-match)] text-[color:var(--color-tag-no-match-text)] border border-[color:var(--color-tag-no-match-text)]/20",
-    neutral:
-      "bg-white/20 text-white border border-white/25",
-  };
-
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold leading-none",
-        styles[variant],
-        className,
-      )}
-    >
-      {tag}
-    </span>
-  );
-}
-
 /* ─── Campus image with fallback ─────────────────────────────────────────── */
 function CampusImage({ src, alt }: { src?: string; alt: string }) {
   const [errored, setErrored] = React.useState(false);
-  const show = src && !errored;
-
-  if (show) {
+  if (src && !errored) {
     return (
       // eslint-disable-next-line @next/next/no-img-element
       <img
         src={src}
         alt={alt}
         onError={() => setErrored(true)}
-        className="absolute inset-0 w-full h-full object-cover"
+        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
       />
     );
   }
-
   return (
-    <div
-      className="absolute inset-0 bg-gradient-to-br from-stone-200 via-stone-100 to-stone-300"
-      aria-hidden
-    />
+    <div className="absolute inset-0 bg-gradient-to-br from-slate-200 via-slate-100 to-blue-100" aria-hidden />
+  );
+}
+
+/* ─── Inline icon helpers ────────────────────────────────────────────────── */
+function IconStar({ filled }: { filled?: boolean }) {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
+      <path
+        d="M7 1.5l1.6 3.2 3.5.5-2.6 2.5.6 3.5L7 9.7l-3.1 1.5.6-3.5L2 5.2l3.5-.5L7 1.5z"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinejoin="round"
+        fill={filled ? "currentColor" : "none"}
+      />
+    </svg>
+  );
+}
+function IconEyeOff() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
+      <path d="M2 2l10 10M5.5 5.6A2.5 2.5 0 009.4 9.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+      <path d="M3 6.2C4 4.7 5.4 3.5 7 3.5c.7 0 1.4.2 2 .6M11 7.8C10 9.3 8.6 10.5 7 10.5c-.7 0-1.4-.2-2-.6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+function IconArrow() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden>
+      <path d="M2.5 6.5h8M7 3.5l3.5 3-3.5 3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+/* ─── Tag chip ────────────────────────────────────────────────────────────── */
+function TagChip({ tag, university }: { tag: string; university: IUniversityProfile }) {
+  const variant = classifyTag(tag, university);
+  const cls =
+    variant === "match"
+      ? "bg-emerald-500/15 text-emerald-700 ring-1 ring-emerald-500/20"
+      : variant === "nomatch"
+        ? "bg-red-500/12 text-red-600 ring-1 ring-red-400/20"
+        : "bg-white/15 text-white/90 ring-1 ring-white/20";
+  return (
+    <span className={cn("inline-flex items-center rounded-full px-2 py-[2px] text-[9px] font-semibold tracking-wide leading-none", cls)}>
+      {variant === "match" && <span className="mr-0.5 text-emerald-600">✓</span>}
+      {variant === "nomatch" && <span className="mr-0.5">✗</span>}
+      {tag}
+    </span>
+  );
+}
+
+/* ─── Stat chip ───────────────────────────────────────────────────────────── */
+function StatChip({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col items-center px-2.5 py-1.5 rounded-xl bg-white/10 ring-1 ring-white/15 min-w-0">
+      <span className="text-[9px] uppercase tracking-wider text-white/55 font-semibold leading-none">{label}</span>
+      <span className="text-[11px] font-bold text-white leading-tight mt-0.5 tabular-nums">{value}</span>
+    </div>
   );
 }
 
@@ -150,6 +166,7 @@ function CampusImage({ src, alt }: { src?: string; alt: string }) {
 export interface HorizontalFeedNodeProps
   extends Omit<HTMLMotionProps<"article">, "children"> {
   university: IUniversityProfile;
+  rsScore?: number;  // computed per-user RS; falls back to university.recommendationScore
   onEnter?: (id: string) => void;
   isActive?: boolean;
 }
@@ -159,7 +176,7 @@ export const HorizontalFeedNode = React.forwardRef<
   HTMLElement,
   HorizontalFeedNodeProps
 >(function HorizontalFeedNode(
-  { university, onEnter, isActive = true, className, ...props },
+  { university, rsScore, onEnter, isActive = true, className, ...props },
   ref,
 ) {
   const saved = useAlgorithmStore((s) => s.savedUniversities);
@@ -170,134 +187,190 @@ export const HorizontalFeedNode = React.forwardRef<
   const isSaved = saved.includes(university.id);
   const isHidden = hidden.includes(university.id);
 
-  const cheapestProgram = React.useMemo(() => {
+  const cheapestTuition = React.useMemo(() => {
     if (university.programs.length === 0) return null;
-    return university.programs.reduce((min, p) =>
-      p.tuitionUsdPerYear < min.tuitionUsdPerYear ? p : min,
+    const min = university.programs.reduce((a, b) =>
+      b.tuitionUsdPerYear < a.tuitionUsdPerYear ? b : a,
     );
+    return min.tuitionUsdPerYear > 0 ? min : null;
   }, [university.programs]);
 
-  const displayScore = university.recommendationScore ?? university.fitScore;
+  const displayScore = rsScore ?? university.recommendationScore ?? university.fitScore;
+  const hasScholarship = university.programs.some((p) => p.scholarshipAvailable);
 
   return (
     <motion.article
       ref={ref}
-      layout
       className={cn(
-        "relative h-[80vh] w-[22rem] rounded-3xl overflow-hidden select-none",
-        "card-shadow",
+        "group relative h-[68vh] w-[21rem] rounded-[28px] overflow-hidden select-none",
+        "shadow-[0_20px_60px_-12px_rgba(15,23,42,0.28),0_4px_16px_-4px_rgba(15,23,42,0.18)]",
         className,
       )}
-      whileHover={isActive ? { y: -3 } : undefined}
-      transition={{ ease: "circOut", duration: 0.22 }}
+      whileHover={isActive ? { y: -4, scale: 1.008 } : undefined}
+      transition={{ type: "spring", stiffness: 300, damping: 24 }}
       aria-hidden={isActive ? undefined : true}
       tabIndex={isActive ? undefined : -1}
       inert={isActive ? undefined : true}
       {...props}
     >
-      {/* Campus photo */}
+      {/* ── Campus photo ─────────────────────────────────────────── */}
       <CampusImage
         src={university.heroImageUrl ?? university.campusPhoto}
         alt={`${university.name} campus`}
       />
 
-      {/* Gradient overlay — stronger at bottom */}
+      {/* ── Photo gradient overlay ──────────────────────────────── */}
       <div
         className="absolute inset-0"
         style={{
           background:
-            "linear-gradient(to top, rgba(0,0,0,0.88) 0%, rgba(0,0,0,0.45) 45%, rgba(0,0,0,0.10) 100%)",
+            "linear-gradient(to top, rgba(8,10,20,0.96) 0%, rgba(8,10,20,0.55) 42%, rgba(8,10,20,0.06) 72%, transparent 100%)",
         }}
         aria-hidden
       />
 
-      {/* Top-right: RS score badge */}
-      {university.recommendationScore != null && (
+      {/* ── TOP BADGE ROW ───────────────────────────────────────── */}
+      <div className="absolute top-4 inset-x-4 flex items-start justify-between">
+        {/* Country + city */}
         <div
-          className="absolute top-4 right-4 rounded-full px-2.5 py-1 text-xs font-bold"
-          style={{
-            background: "rgba(129,88,58,0.85)",
-            color: "#fff",
-            backdropFilter: "blur(8px)",
-          }}
+          className="rounded-full px-2.5 py-1 text-[10px] font-semibold text-white/90 leading-none"
+          style={{ background: "rgba(255,255,255,0.12)", backdropFilter: "blur(8px)" }}
         >
-          RS {university.recommendationScore}
-        </div>
-      )}
-
-      {/* Header */}
-      <header className="absolute top-4 left-4 right-16 text-white">
-        <h3 className="font-display text-[length:var(--text-fluid-xl)] leading-tight drop-shadow-md line-clamp-2">
-          {university.name}
-        </h3>
-        <p className="text-[length:var(--text-fluid-xs)] opacity-80 mt-0.5">
           {university.city}, {university.country}
-          {university.worldRank ? ` · #${university.worldRank} world` : ""}
-        </p>
-      </header>
+        </div>
 
-      {/* Bottom content */}
-      <div className="absolute inset-x-4 bottom-4 flex items-end justify-between gap-3">
-        {/* Left: score ring + tags + price */}
-        <div className="flex flex-col items-start gap-2 text-white max-w-[58%]">
-          <AIFitRing score={displayScore} size={80} strokeWidth={7} />
+        {/* RS badge */}
+        {displayScore > 0 && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.1, type: "spring", stiffness: 260, damping: 20 }}
+            className="rounded-full px-2.5 py-1 text-[10px] font-bold text-white leading-none flex items-center gap-1"
+            style={{ background: "rgba(37,99,235,0.88)", backdropFilter: "blur(8px)" }}
+          >
+            <span className="text-blue-200 text-[8px]">RS</span>
+            {Math.round(displayScore)}
+          </motion.div>
+        )}
+      </div>
 
-          {/* Colored tags */}
+      {/* ── GLASS BOTTOM PANEL ─────────────────────────────────── */}
+      <div className="absolute inset-x-0 bottom-0 flex flex-col">
+
+        {/* ── Horizontal top boundary of the glass panel ────────── */}
+        <div className="h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+
+        <div
+          className="px-4 pt-4 pb-4 flex flex-col gap-3"
+          style={{ background: "rgba(8,10,20,0.72)", backdropFilter: "blur(20px) saturate(140%)" }}
+        >
+          {/* Name row */}
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <h3 className="text-white font-semibold text-[15px] leading-snug line-clamp-2">
+                {university.name}
+              </h3>
+              {university.worldRank && (
+                <p className="text-[10px] text-white/50 mt-0.5 font-medium">
+                  #{university.worldRank} World Ranking
+                </p>
+              )}
+            </div>
+            {/* Mini RS ring */}
+            <div className="shrink-0 mt-0.5">
+              <AIFitRing score={displayScore} size={44} strokeWidth={4} showLabel />
+            </div>
+          </div>
+
+          {/* ── Stat chips widget ─────────────────────────────────── */}
+          <div className="flex gap-1.5 flex-wrap">
+            {university.programs.length > 0 && (
+              <StatChip label="Programs" value={String(university.programs.length)} />
+            )}
+            {cheapestTuition && (
+              <StatChip
+                label="From"
+                value={`$${(cheapestTuition.tuitionUsdPerYear / 1000).toFixed(0)}k/yr`}
+              />
+            )}
+            {cheapestTuition === null && (
+              <StatChip label="Tuition" value="Free" />
+            )}
+            {hasScholarship && (
+              <StatChip label="Aid" value="✓ Avail" />
+            )}
+            {university.type && (
+              <StatChip label="Type" value={university.type.slice(0, 6)} />
+            )}
+          </div>
+
+          {/* ── Tag chips ──────────────────────────────────────────── */}
           <div className="flex flex-wrap gap-1">
-            {university.tags.slice(0, 3).map((tag) => (
+            {university.tags.slice(0, 4).map((tag) => (
               <TagChip key={tag} tag={tag} university={university} />
             ))}
           </div>
 
-          {/* Cheapest program price */}
-          {cheapestProgram && cheapestProgram.tuitionUsdPerYear > 0 ? (
-            <p className="text-[length:var(--text-fluid-xs)] opacity-85">
-              from{" "}
-              <span className="font-semibold tabular-nums">
-                ${cheapestProgram.tuitionUsdPerYear.toLocaleString()}/yr
-              </span>
-              {cheapestProgram.scholarshipAvailable ? " · scholarship" : ""}
-            </p>
-          ) : null}
-        </div>
+          {/* ── Horizontal divider ─────────────────────────────────── */}
+          <div className="h-px bg-white/10" />
 
-        {/* Right: action buttons */}
-        <div className="flex flex-col gap-2 items-end">
-          <div className="flex gap-1.5">
-            <ActionButton
-              variant={isSaved ? "primary" : "glass"}
-              size="icon"
+          {/* ── Action row ─────────────────────────────────────────── */}
+          <div className="flex items-center gap-2">
+            {/* Save */}
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.88 }}
+              onClick={(e: React.MouseEvent) => { e.stopPropagation(); saveNode(university.id); }}
               aria-label={isSaved ? "Saved" : "Save"}
-              aria-pressed={isSaved}
-              onClick={(e) => {
-                e.stopPropagation();
-                saveNode(university.id);
-              }}
+              className={cn(
+                "flex items-center gap-1 rounded-full px-2.5 py-1.5 text-[10px] font-semibold transition-all duration-200",
+                isSaved
+                  ? "bg-blue-600 text-white"
+                  : "bg-white/10 text-white/70 hover:bg-white/18 ring-1 ring-white/15",
+              )}
             >
-              <CheckCircle size={16} />
-            </ActionButton>
-            <ActionButton
-              variant={isHidden ? "primary" : "glass"}
-              size="icon"
-              aria-label={isHidden ? "Hidden" : "Hide"}
-              aria-pressed={isHidden}
-              onClick={(e) => {
-                e.stopPropagation();
-                hideNode(university.id);
-              }}
+              <IconStar filled={isSaved} />
+              {isSaved ? "Saved" : "Save"}
+            </motion.button>
+
+            {/* Hide */}
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.88 }}
+              onClick={(e: React.MouseEvent) => { e.stopPropagation(); hideNode(university.id); }}
+              aria-label="Hide"
+              className={cn(
+                "flex items-center gap-1 rounded-full px-2.5 py-1.5 text-[10px] font-semibold transition-all duration-200",
+                isHidden
+                  ? "bg-gray-600 text-white"
+                  : "bg-white/10 text-white/60 hover:bg-white/18 ring-1 ring-white/15",
+              )}
             >
-              <XCircle size={16} />
-            </ActionButton>
+              <IconEyeOff />
+              Hide
+            </motion.button>
+
+            <div className="flex-1" />
+
+            {/* View Details */}
+            <AnimatePresence>
+              {isActive && (
+                <motion.button
+                  type="button"
+                  initial={{ opacity: 0, x: 8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 8 }}
+                  whileHover={{ scale: 1.04 }}
+                  whileTap={{ scale: 0.95 }}
+                  transition={{ type: "spring", stiffness: 320, damping: 22 }}
+                  onClick={() => onEnter?.(university.id)}
+                  className="flex items-center gap-1.5 rounded-full bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold px-3.5 py-1.5 shadow-lg shadow-blue-900/40 transition-colors duration-150"
+                >
+                  View Details <IconArrow />
+                </motion.button>
+              )}
+            </AnimatePresence>
           </div>
-          {isActive && (
-            <ActionButton
-              variant="primary"
-              size="md"
-              onClick={() => onEnter?.(university.id)}
-            >
-              Enter <ChevronRight size={14} />
-            </ActionButton>
-          )}
         </div>
       </div>
     </motion.article>

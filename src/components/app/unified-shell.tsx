@@ -481,7 +481,7 @@ export function UnifiedShell() {
                     <p className="text-[length:var(--text-fluid-xs)] text-[color:var(--color-muted)] text-right">
                       Источник:{" "}
                       {fitState.data.source === "openai"
-                        ? "GPT AI"
+                        ? "GPT-4o mini · OpenAI"
                         : "mock / без ключа"}
                     </p>
                   </div>
