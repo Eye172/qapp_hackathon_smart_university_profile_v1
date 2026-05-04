@@ -59,21 +59,24 @@ export function computeRS(
     // Categories that need values to be meaningful
     const needsValues = [
       "countries", "cities", "fields", "languages",
-      "budget", "rank", "scholarship", "studyLevel",
+      "budget", "rank", "scholarship", "studyLevel", "universityTags",
     ];
     if (needsValues.includes(categoryKey) && vals.length === 0) continue;
 
     let matchPct = 0;
     let label = "";
 
-    // ── countries ────────────────────────────────────────────────
+    // ── countries (also matches cities since they share one category) ─────
     if (categoryKey === "countries") {
       const uniC = norm(university.country);
-      const hit = vals.some((v) => uniC.includes(v) || v.includes(uniC));
+      const uniCi = norm(university.city);
+      const countryHit = vals.some((v) => uniC.includes(v) || v.includes(uniC));
+      const cityHit = vals.some((v) => uniCi.includes(v) || v.includes(uniCi));
+      const hit = countryHit || cityHit;
       matchPct = hit ? 1 : 0;
       label = hit
-        ? `✓ Located in ${university.country}`
-        : `✗ Not in preferred countries (${vals.slice(0, 3).join(", ")})`;
+        ? (cityHit ? `✓ Located in ${university.city}` : `✓ Located in ${university.country}`)
+        : `✗ Not in preferred countries/cities (${vals.slice(0, 3).join(", ")})`;
     }
 
     // ── cities ───────────────────────────────────────────────────
@@ -159,7 +162,9 @@ export function computeRS(
     // ── studyLevel ───────────────────────────────────────────────
     else if (categoryKey === "studyLevel") {
       const levels = university.programs.map((p) => norm(p.level));
-      const hit = vals.some((v) => levels.includes(v));
+      // Normalize chip values like "Bachelor's" → "bachelor", "Master's" → "master"
+      const normVals = vals.map((v) => v.replace(/['']s?$/i, "").trim());
+      const hit = normVals.some((v) => levels.some((l) => l.includes(v) || v.includes(l)));
       matchPct = hit ? 1 : 0;
       label = hit
         ? `✓ Offers ${vals[0]} programs`
@@ -179,6 +184,18 @@ export function computeRS(
         matchPct = 0;
         label = `✗ GPA ${student} below minimum ${floor} — ineligible`;
       }
+    }
+
+    // ── universityTags ────────────────────────────────────────────
+    else if (categoryKey === "universityTags") {
+      const uniTags = university.tags.map((t) => norm(t));
+      const hitTags = vals.filter((v) =>
+        uniTags.some((t) => t.includes(v) || v.includes(t)),
+      );
+      matchPct = vals.length > 0 ? hitTags.length / vals.length : 0;
+      label = hitTags.length > 0
+        ? `✓ Matches: ${hitTags.slice(0, 3).join(", ")}`
+        : `✗ No tag match (${vals.slice(0, 2).join(", ")})`;
     }
 
     // Unknown category — skip

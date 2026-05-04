@@ -96,9 +96,19 @@ export interface IUniversityProfile {
   websiteUrl?: string;
   contactEmail?: string;
   worldRank?: number;
+  qsWorldRank?: number;
+  theWorldRank?: number;
   minGpa?: number;
   minIelts?: number;
   minSat?: number;
+  entGrantMin?: number;
+  entPaidMin?: number;
+  entSubject?: string;
+  acceptanceRate?: number;
+  studentFacultyRatio?: number;
+  employmentRate6mo?: number;
+  avgStartingSalaryUsd?: number;
+  campusSizeHa?: number;
   applicationDeadline?: string;
   description?: string;
   fitScore: number;
@@ -106,23 +116,25 @@ export interface IUniversityProfile {
   fitScoreBreakdown?: IFitScoreBreakdown;
   programs: IUniversityProgram[];
   tags: string[];
-  photos?: string[];            // campus photo URLs for hero slider
-  statsTestScores?: {
-    sat_math_25?: number | null;
-    sat_math_75?: number | null;
-    sat_read_25?: number | null;
-    sat_read_75?: number | null;
-  };
+  photos?: string[];
+  statsTestScores?: Record<string, unknown>;
   statsDemographics?: {
     enrollment?: number;
+    undergrad?: number;
+    grad?: number;
     gender?: { male: number; female: number };
     diversity?: Record<string, number>;
+    intl_student_pct?: number;
+    first_gen_pct?: number;
+    [key: string]: unknown;
   };
   statsFinancials?: {
-    tuition?: number;
-    room_board?: number;
-    avg_after_aid?: number;
-    median_earnings?: number;
+    tuition_domestic_usd?: number;
+    tuition_intl_usd?: number;
+    room_board_usd?: number;
+    avg_after_aid_usd?: number;
+    median_earnings_10y_usd?: number;
+    [key: string]: unknown;
   };
   statsTopMajors?: Array<{ name: string; percent: number }>;
   extendedProfile?: {
@@ -130,5 +142,8 @@ export interface IUniversityProfile {
     campus_life?: string;
     housing?: string;
     career?: string;
+    notable_alumni?: string[];
+    subject_ranks?: Array<{ subject: string; rank: number }>;
+    [key: string]: unknown;
   };
 }

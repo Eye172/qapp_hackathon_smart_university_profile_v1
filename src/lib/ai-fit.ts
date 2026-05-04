@@ -14,11 +14,14 @@ export interface AIFitResult {
 }
 
 /* ─── Deterministic profile hash (cache key) ─────────────────────────────── */
+const PROMPT_VERSION = "v3"; // bump to invalidate cache when prompt changes
+
 function hashProfile(
   profile: IStudentProfile,
   preferences?: UserPreferenceData[],
 ): string {
   const key = JSON.stringify({
+    _v: PROMPT_VERSION,
     gpa: profile.gpa,
     gpaScale: profile.gpaScale,
     ielts: profile.ielts.overall,
@@ -108,24 +111,24 @@ function tryParseLLMResponse(
   try {
     const parsed = JSON.parse(cleaned) as {
       fitScore?: number;
-      rationale?: string;
+      summary?: string;
+      strengths?: string[];
+      gaps?: string[];
+      actionPlan?: string[];
+      chartComments?: Record<string, string>;
       breakdown?: Record<string, number>;
+      rationale?: string;
     };
     const score = Number(parsed.fitScore ?? fallbackScore);
-    const rationale = parsed.rationale ?? "Evaluation complete.";
-    const breakdownLine = parsed.breakdown
-      ? `**Academic ${parsed.breakdown.academic}** · **Language ${parsed.breakdown.language}** · **Financial ${parsed.breakdown.financial}** · **Interest ${parsed.breakdown.interest}**`
-      : "";
+    // Store full rich JSON in reasons for rich display; keep gaps as formatted text
+    const richReasons = JSON.stringify(parsed);
+    const gapsText = parsed.gaps?.length
+      ? parsed.gaps.join("\n\n") + (parsed.actionPlan?.length ? `\n\n**Action Plan:**\n${parsed.actionPlan.join("\n")}` : "")
+      : parsed.rationale ?? "No critical gaps detected.";
     return {
       score,
-      reasons: `${rationale}\n\n${breakdownLine}`.trim(),
-      gaps: breakdownLine
-        ? `Lowest axis: ${
-            Object.entries(parsed.breakdown ?? {})
-              .sort(([, a], [, b]) => Number(a) - Number(b))[0]
-              ?.join(": ") ?? ""
-          } — focus your prep here.`
-        : "No critical gaps detected.",
+      reasons: richReasons,
+      gaps: gapsText,
     };
   } catch {
     return null;
@@ -146,16 +149,37 @@ function buildPreferenceContext(preferences: UserPreferenceData[]): string {
 }
 
 /* ─── System prompt ──────────────────────────────────────────────────────── */
-const SYSTEM_PROMPT = `You are the QApp University Fit Engine — an admissions intelligence model that scores how well a single applicant matches a single university.
+const SYSTEM_PROMPT = `You are Dr. Alex Morgan — a world-class university admissions counselor with 20+ years of experience placing students in top global universities. You combine the analytical precision of an admissions officer with the empathy and strategic thinking of a personal mentor.
 
-You receive two JSON objects in the user message:
-- "studentProfile": GPA + scale, IELTS sub-scores, SAT (optional), nationality, interests[], preferredCountries[], preferred study level, annual budget USD.
-- "university": name, country, city, world rank, programs[] (level, language, tuitionUsdPerYear, scholarshipAvailable, field), tags[], minGpa, minIelts, minSat.
+You receive two JSON objects:
+- "studentProfile": GPA (with scale), IELTS sub-scores, SAT (optional), nationality, interests[], preferredCountries[], preferred study level, annual budget USD, documents[].
+- "university": name, country, city, world rank (QS/THE), programs[], tags[], minGpa, minIelts, minSat, acceptanceRate, employmentRate6mo, avgStartingSalaryUsd, statsDemographics, statsFinancials, statsTopMajors, description.
 
-Respond ONLY with valid JSON in this exact schema:
+Your response must be ONLY valid JSON — no markdown fences, no text outside the JSON. Use this EXACT schema:
 {
   "fitScore": <integer 0–100>,
-  "rationale": "<2–4 sentence narrative explaining the match in plain English, use **bold** for key numbers>",
+  "summary": "<3–5 sentence expert narrative in first person ('Based on your profile...'), cite specific numbers, give your honest professional verdict on this match>",
+  "strengths": [
+    "<Specific strength with numbers — e.g. 'Your GPA of 3.8/4.0 comfortably clears the 3.2 minimum, placing you in the top applicant tier'>",
+    "<Another concrete strength>",
+    "<Another concrete strength>"
+  ],
+  "gaps": [
+    "<Specific gap with actionable advice — e.g. 'Your IELTS Writing 6.5 falls below the preferred 7.0; a 6-week targeted prep course should close this gap'>",
+    "<Another gap with action>"
+  ],
+  "actionPlan": [
+    "<Immediate action — e.g. '1. Retake IELTS in 8 weeks targeting Writing 7.0+'>",
+    "<Next action>",
+    "<Next action>",
+    "<Next action>"
+  ],
+  "chartComments": {
+    "scores": "<2–3 sentences analyzing the score comparison chart: how do their actual scores compare to requirements, what does this mean for admission chances, any sub-score concerns>",
+    "majors": "<2–3 sentences on top fields of study: which programs best align with the student's interests, any hidden gems in the program list, career trajectory implications>",
+    "financial": "<2–3 sentences on financial fit: how does the student's budget compare to tuition, scholarship opportunities, ROI of this university>",
+    "demographics": "<2–3 sentences on university environment: enrollment size, international student community, how this fits the student's background and preferences>"
+  },
   "breakdown": {
     "academic": <0–100>,
     "language": <0–100>,
@@ -164,12 +188,14 @@ Respond ONLY with valid JSON in this exact schema:
   }
 }
 
-Rules:
-- fitScore = weighted average of breakdown axes (academic 35%, language 25%, financial 20%, interest 20%)
-- Be specific: cite actual GPA, IELTS, tuition numbers from the data
-- If the student clearly meets all requirements, fitScore should be 75–95
-- If there are significant gaps, fitScore should be 40–70
-- Respond with JSON only — no markdown code fences, no explanation outside the JSON`;
+Critical rules:
+- fitScore = weighted average: academic 35%, language 25%, financial 20%, interest 20%
+- Write as a real expert counselor — warm, specific, honest, never vague
+- Every strength and gap MUST cite actual numbers from the data
+- actionPlan must have 4 concrete, time-bound steps
+- If acceptance rate < 20% treat it as highly selective and mention strategy
+- If employmentRate > 85% mention it as a strong ROI signal
+- Respond with valid JSON ONLY`;
 
 /* ─── Main export ────────────────────────────────────────────────────────── */
 export async function fetchAIFit(

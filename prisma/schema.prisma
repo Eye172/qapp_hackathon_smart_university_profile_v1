@@ -143,6 +143,20 @@ model University {
   minIelts Float?
   minSat   Int?
 
+  // KZ-specific ENT thresholds
+  entGrantMin Int?    // Min ENT score for state grant (out of 140)
+  entPaidMin  Int?    // Min ENT score for paid enrollment
+  entSubject  String? // Required ENT profile subjects
+
+  // Key stats for stat cards
+  acceptanceRate      Float? // Acceptance rate %
+  studentFacultyRatio Float? // e.g. 7.0 = "7:1"
+  employmentRate6mo   Float? // % employed within 6 months
+  avgStartingSalaryUsd Int?
+  campusSizeHa        Float? // Campus size in hectares
+  qsWorldRank         Int?
+  theWorldRank        Int?
+
   applicationDeadline String? // main deadline "YYYY-MM-DD"
   description         String?
   fitScore            Int     @default(70)

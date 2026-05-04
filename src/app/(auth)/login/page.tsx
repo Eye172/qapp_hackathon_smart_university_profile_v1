@@ -10,8 +10,8 @@ import { cn } from "@/lib/tailwind-utils";
 export default function LoginPage() {
   const router = useRouter();
 
-  const [email, setEmail] = React.useState("aliya@qapp.kz");
-  const [password, setPassword] = React.useState("password123");
+  const [email, setEmail] = React.useState("");
+  const [password, setPassword] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
 
@@ -20,21 +20,28 @@ export default function LoginPage() {
     setError(null);
     setSubmitting(true);
 
-    const result = await signIn("credentials", {
-      email: email.trim(),
-      password,
-      redirect: false,
-    });
+    try {
+      const result = await signIn("credentials", {
+        email: email.trim().toLowerCase(),
+        password,
+        redirect: false,
+      });
 
-    setSubmitting(false);
+      if (!result?.ok) {
+        setError(
+          result?.error === "CredentialsSignin"
+            ? "Incorrect email or password."
+            : result?.error ?? "Sign-in failed. Please try again.",
+        );
+        setSubmitting(false);
+        return;
+      }
 
-    if (!result?.ok) {
-      setError("Invalid email or password.");
-      return;
+      router.replace("/feed");
+    } catch {
+      setError("An unexpected error occurred. Please try again.");
+      setSubmitting(false);
     }
-
-    router.push("/feed");
-    router.refresh();
   }
 
   return (
