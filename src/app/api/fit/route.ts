@@ -1,9 +1,11 @@
 import { fetchAIFit } from "@/lib/ai-fit";
 import type { IStudentProfile, IUniversityProfile } from "@/lib/types";
+import type { UserPreferenceData } from "@/lib/preference-categories";
 
 interface FitBody {
   studentProfile?: IStudentProfile;
   university?: IUniversityProfile;
+  preferences?: UserPreferenceData[];
 }
 
 export async function POST(req: Request): Promise<Response> {
@@ -21,6 +23,18 @@ export async function POST(req: Request): Promise<Response> {
     );
   }
 
-  const result = await fetchAIFit(body.university, body.studentProfile);
-  return Response.json(result);
+  try {
+    const result = await fetchAIFit(
+      body.university,
+      body.studentProfile,
+      body.preferences,
+    );
+    return Response.json(result);
+  } catch (err) {
+    console.error("[/api/fit] Unhandled error:", err);
+    return Response.json(
+      { error: err instanceof Error ? err.message : "Evaluation failed" },
+      { status: 500 },
+    );
+  }
 }
