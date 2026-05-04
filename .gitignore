@@ -35,6 +35,17 @@ yarn-error.log*
 # claude code (local machine paths / permissions)
 .claude/settings.local.json
 
+# sqlite databases (never commit — contains real data)
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+prisma/dev.db
+prisma/prisma/dev.db
+
+# utility scripts (local only)
+scripts/
+
 # vercel
 .vercel
 
