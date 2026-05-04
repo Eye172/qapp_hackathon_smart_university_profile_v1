@@ -133,13 +133,6 @@ export function UniversityCTA({
           </a>
         )}
 
-        {/* Start Application CTA */}
-        <button
-          type="button"
-          className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl px-5 py-2 shadow-md shadow-blue-200 transition-all hover:shadow-lg hover:shadow-blue-300 active:scale-95"
-        >
-          Start Application →
-        </button>
       </div>
     </div>
   );

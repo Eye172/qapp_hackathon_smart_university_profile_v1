@@ -146,13 +146,6 @@ export function StickySidebar({
 
       {/* ── Actions ────────────────────────────────────────── */}
       <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-5 space-y-3">
-        <button
-          type="button"
-          className="w-full bg-blue-600 hover:bg-blue-700 active:scale-[0.97] text-white text-sm font-bold rounded-2xl px-4 py-3 shadow-md shadow-blue-200/60 transition-all"
-        >
-          Start Application →
-        </button>
-
         <div className="grid grid-cols-2 gap-2">
           <button
             type="button"

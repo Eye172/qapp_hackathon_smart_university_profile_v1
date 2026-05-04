@@ -27,9 +27,9 @@ const SLOT_CONFIG: Record<
 
 const SPRING = {
   type: "spring" as const,
-  stiffness: 320,
-  damping: 30,
-  mass: 0.85,
+  stiffness: 160,
+  damping: 38,
+  mass: 1.2,
 };
 
 /* ─── Skeleton ───────────────────────────────────────────────────────────── */

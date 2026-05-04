@@ -8,6 +8,19 @@ interface DocumentsChecklistProps {
   docs: IStudentDocument[];
 }
 
+async function uploadDoc(docId: string, file: File): Promise<boolean> {
+  try {
+    const res = await fetch(`/api/documents/${docId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "uploaded", fileName: file.name }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 type Group = "ready" | "review" | "missing";
 
 function getGroup(doc: IStudentDocument): Group {
@@ -53,7 +66,27 @@ const GROUP_META: Record<
   },
 };
 
-export function DocumentsChecklist({ docs }: DocumentsChecklistProps) {
+export function DocumentsChecklist({ docs: initialDocs }: DocumentsChecklistProps) {
+  const [docs, setDocs] = React.useState<IStudentDocument[]>(initialDocs);
+  const [uploading, setUploading] = React.useState<Record<string, boolean>>({});
+  const fileRefs = React.useRef<Record<string, HTMLInputElement | null>>({});
+
+  async function handleFileChange(docId: string, e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading((p) => ({ ...p, [docId]: true }));
+    const ok = await uploadDoc(docId, file);
+    if (ok) {
+      setDocs((prev) =>
+        prev.map((d) =>
+          d.id === docId ? { ...d, status: "uploaded" as const, fileName: file.name } : d,
+        ),
+      );
+    }
+    setUploading((p) => ({ ...p, [docId]: false }));
+    e.target.value = "";
+  }
+
   const readyCount = docs.filter((d) => d.status === "verified").length;
   const total = docs.length;
   const pct = total > 0 ? Math.round((readyCount / total) * 100) : 0;
@@ -133,12 +166,23 @@ export function DocumentsChecklist({ docs }: DocumentsChecklistProps) {
                     </div>
 
                     {group === "missing" ? (
-                      <button
-                        type="button"
-                        className="flex-shrink-0 text-xs text-blue-600 border border-blue-200 rounded-xl px-3 py-1.5 hover:bg-blue-50 font-semibold transition-all active:scale-95"
-                      >
-                        Upload
-                      </button>
+                      <>
+                        <input
+                          ref={(el) => { fileRefs.current[d.id] = el; }}
+                          type="file"
+                          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                          className="hidden"
+                          onChange={(e) => handleFileChange(d.id, e)}
+                        />
+                        <button
+                          type="button"
+                          disabled={uploading[d.id]}
+                          onClick={() => fileRefs.current[d.id]?.click()}
+                          className="flex-shrink-0 text-xs text-blue-600 border border-blue-200 rounded-xl px-3 py-1.5 hover:bg-blue-50 font-semibold transition-all active:scale-95 disabled:opacity-50"
+                        >
+                          {uploading[d.id] ? "Uploading…" : "Upload"}
+                        </button>
+                      </>
                     ) : (
                       <span
                         className={`flex-shrink-0 text-[10px] font-bold rounded-full px-2.5 py-1 ${meta.badgeBg}`}

@@ -10,50 +10,76 @@ export interface PreferenceCategoryConfig {
   maxValues: number | null;
   inputType: "text" | "number";
   defaultPriority: number;
-  /** Example chips shown in Step 2 until user adds their own */
-  examples?: string[];
+  /** Predefined options shown as clickable chips; if set, input is strict-select only */
+  options?: string[];
 }
 
 export const PREFERENCE_CATEGORIES: PreferenceCategoryConfig[] = [
   {
     key: "countries",
-    label: "Country/ies",
-    description: "Countries you want to study in",
-    placeholder: "e.g. Germany",
+    label: "Country & City",
+    description: "Where do you want to study? Select countries and/or cities",
+    placeholder: "Type a country or city…",
     maxValues: null,
     inputType: "text",
     defaultPriority: 15,
-    examples: ["Kazakhstan", "Germany", "USA"],
-  },
-  {
-    key: "cities",
-    label: "City/ies",
-    description: "Preferred cities",
-    placeholder: "e.g. Berlin",
-    maxValues: null,
-    inputType: "text",
-    defaultPriority: 8,
-    examples: ["Astana", "Berlin", "London"],
+    options: [
+      "USA", "UK", "Germany", "Canada", "Australia", "Netherlands",
+      "France", "Japan", "South Korea", "Switzerland", "Singapore",
+      "Kazakhstan", "China", "Sweden", "New Zealand",
+      "Boston", "New York", "London", "Berlin", "Munich",
+      "Toronto", "Vancouver", "Sydney", "Melbourne", "Amsterdam",
+      "Paris", "Tokyo", "Seoul", "Zurich", "Almaty", "Astana",
+    ],
   },
   {
     key: "fields",
     label: "Field of Study",
     description: "Academic subjects you want to pursue",
-    placeholder: "e.g. Computer Science",
+    placeholder: "Pick fields…",
     maxValues: null,
     inputType: "text",
     defaultPriority: 16,
-    examples: ["Computer Science", "Business", "Engineering"],
+    options: [
+      "Computer Science", "Software Engineering", "Data Science",
+      "Artificial Intelligence", "Cybersecurity", "Electrical Engineering",
+      "Mechanical Engineering", "Civil Engineering", "Business Administration",
+      "Finance", "Economics", "Medicine", "Biotechnology", "Pharmacy",
+      "Law", "Psychology", "Architecture", "Design", "Mathematics",
+      "Physics", "Chemistry", "Biology", "Environmental Science",
+      "International Relations", "Political Science", "Journalism",
+      "Education", "Social Sciences",
+    ],
   },
   {
     key: "languages",
     label: "Language of Instruction",
     description: "Preferred teaching language",
-    placeholder: "e.g. English",
+    placeholder: "Pick language(s)…",
     maxValues: null,
     inputType: "text",
     defaultPriority: 10,
-    examples: ["English", "German"],
+    options: [
+      "English", "German", "French", "Dutch", "Japanese",
+      "Korean", "Chinese", "Spanish", "Russian", "Arabic",
+    ],
+  },
+  {
+    key: "universityTags",
+    label: "University Type & Tags",
+    description: "What kind of university are you looking for?",
+    placeholder: "Pick tags…",
+    maxValues: null,
+    inputType: "text",
+    defaultPriority: 11,
+    options: [
+      "Research Intensive", "Top Ranked", "Public", "Private",
+      "Scholarship Available", "International Community",
+      "Small Class Sizes", "Industry Connections", "Strong Alumni Network",
+      "Sports & Campus Life", "Urban Campus", "Rural/Suburban Campus",
+      "Technology Focus", "Liberal Arts", "STEM Focus",
+      "Co-op / Work-Study", "Online Options",
+    ],
   },
   {
     key: "minGpa",
@@ -86,21 +112,21 @@ export const PREFERENCE_CATEGORIES: PreferenceCategoryConfig[] = [
     key: "scholarship",
     label: "Scholarship",
     description: "How important is scholarship availability?",
-    placeholder: "Required / Preferred / Optional",
+    placeholder: "Select importance…",
     maxValues: 1,
     inputType: "text",
     defaultPriority: 10,
-    examples: ["Required", "Preferred", "Optional"],
+    options: ["Required", "Preferred", "Optional"],
   },
   {
     key: "studyLevel",
     label: "Study Level",
     description: "Preferred degree level",
-    placeholder: "bachelor / master / phd",
+    placeholder: "Select level…",
     maxValues: 1,
     inputType: "text",
     defaultPriority: 8,
-    examples: ["bachelor", "master", "phd"],
+    options: ["Bachelor's", "Master's", "PhD", "Foundation / Pathway"],
   },
 ];
 
