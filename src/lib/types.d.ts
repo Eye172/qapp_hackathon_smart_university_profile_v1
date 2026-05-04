@@ -106,4 +106,29 @@ export interface IUniversityProfile {
   fitScoreBreakdown?: IFitScoreBreakdown;
   programs: IUniversityProgram[];
   tags: string[];
+  photos?: string[];            // campus photo URLs for hero slider
+  statsTestScores?: {
+    sat_math_25?: number | null;
+    sat_math_75?: number | null;
+    sat_read_25?: number | null;
+    sat_read_75?: number | null;
+  };
+  statsDemographics?: {
+    enrollment?: number;
+    gender?: { male: number; female: number };
+    diversity?: Record<string, number>;
+  };
+  statsFinancials?: {
+    tuition?: number;
+    room_board?: number;
+    avg_after_aid?: number;
+    median_earnings?: number;
+  };
+  statsTopMajors?: Array<{ name: string; percent: number }>;
+  extendedProfile?: {
+    mission?: string;
+    campus_life?: string;
+    housing?: string;
+    career?: string;
+  };
 }

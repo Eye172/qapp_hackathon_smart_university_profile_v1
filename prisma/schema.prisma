@@ -148,10 +148,20 @@ model University {
   fitScore            Int     @default(70)
   recommendationScore Float   @default(0) // RS: per-user AI score (0-100), updated by AI
 
-  // JSON string fields — kept for backward compat with existing UI / API
+  // JSON string fields (SQLite stores as text)
   fitScoreBreakdown String?
   programsJson      String  @default("[]") @map("programs") // JSON IUniversityProgram[]
   tags              String  @default("[]") // JSON string[]
+  photosJson        String  @default("[]")  // JSON string[] — campus photo URLs for hero slider
+
+  // Chart data payloads (Recharts) — from gemini-code-1777854206174 schema
+  statsTestScores  String? // JSON: { sat_math_25, sat_math_75, sat_read_25, sat_read_75 }
+  statsDemographics String? // JSON: { enrollment, gender: {male,female}, diversity: {...} }
+  statsFinancials   String? // JSON: { tuition, room_board, avg_after_aid, median_earnings }
+  statsTopMajors    String? // JSON: Array<{ name: string, percent: number }>
+
+  // Extended LLM context payload
+  extendedProfile   String? // JSON: { mission, campus_life, housing, career }
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -238,7 +248,7 @@ model AIFitEvaluation {
   score        Int
   reasons      String
   gaps         String
-  source       String @default("mock") // "anthropic" | "mock"
+  source       String @default("mock") // "openai" | "mock"
 
   createdAt DateTime @default(now())
 

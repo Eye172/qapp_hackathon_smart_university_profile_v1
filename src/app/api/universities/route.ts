@@ -28,6 +28,12 @@ function parseUniversity(u: {
   fitScoreBreakdown: string | null;
   programsJson: string;
   tags: string;
+  photosJson: string;
+  statsTestScores: string | null;
+  statsDemographics: string | null;
+  statsFinancials: string | null;
+  statsTopMajors: string | null;
+  extendedProfile: string | null;
 }): IUniversityProfile {
   return {
     id: u.id,
@@ -56,6 +62,12 @@ function parseUniversity(u: {
       : undefined,
     programs: JSON.parse(u.programsJson) as IUniversityProfile["programs"],
     tags: JSON.parse(u.tags) as string[],
+    photos: JSON.parse(u.photosJson) as string[],
+    statsTestScores: u.statsTestScores ? (JSON.parse(u.statsTestScores) as IUniversityProfile["statsTestScores"]) : undefined,
+    statsDemographics: u.statsDemographics ? (JSON.parse(u.statsDemographics) as IUniversityProfile["statsDemographics"]) : undefined,
+    statsFinancials: u.statsFinancials ? (JSON.parse(u.statsFinancials) as IUniversityProfile["statsFinancials"]) : undefined,
+    statsTopMajors: u.statsTopMajors ? (JSON.parse(u.statsTopMajors) as IUniversityProfile["statsTopMajors"]) : undefined,
+    extendedProfile: u.extendedProfile ? (JSON.parse(u.extendedProfile) as IUniversityProfile["extendedProfile"]) : undefined,
   };
 }
 

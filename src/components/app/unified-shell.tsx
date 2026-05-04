@@ -4,7 +4,6 @@ import * as React from "react";
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 import { useSession, signOut } from "next-auth/react";
-import { MOCK_UNIVERSITIES, getMockUniversityById } from "@/lib/mock-data";
 import type { AIFitResult } from "@/lib/ai-fit";
 import type { IUniversityProfile, StudyLevel } from "@/lib/types";
 import { useSessionStore } from "@/store/useSessionStore";
@@ -97,15 +96,28 @@ export function UnifiedShell() {
 
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const detailRef = React.useRef<HTMLElement | null>(null);
+  const [universities, setUniversities] = React.useState<IUniversityProfile[]>([]);
+  const [feedLoading, setFeedLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    fetch("/api/universities")
+      .then((r) => (r.ok ? (r.json() as Promise<IUniversityProfile[]>) : []))
+      .then((data) => {
+        data.sort((a, b) => (b.recommendationScore ?? b.fitScore) - (a.recommendationScore ?? a.fitScore));
+        setUniversities(data);
+      })
+      .catch(() => [])
+      .finally(() => setFeedLoading(false));
+  }, []);
 
   const selected = React.useMemo(
-    () => (selectedId ? getMockUniversityById(selectedId) : null),
-    [selectedId],
+    () => (selectedId ? universities.find((u) => u.id === selectedId) ?? null : null),
+    [selectedId, universities],
   );
 
   const visibleFeed = React.useMemo(
-    () => MOCK_UNIVERSITIES.filter((u) => !hidden.includes(u.id)),
-    [hidden],
+    () => universities.filter((u) => !hidden.includes(u.id)),
+    [universities, hidden],
   );
 
   const [fitState, setFitState] = React.useState<
@@ -350,7 +362,7 @@ export function UnifiedShell() {
             ) : (
               <ul className="flex flex-wrap gap-2">
                 {saved.map((id) => {
-                  const u = getMockUniversityById(id);
+                  const u = universities.find((x) => x.id === id);
                   if (!u) return null;
                   return (
                     <li key={id}>
@@ -386,7 +398,7 @@ export function UnifiedShell() {
             ) : (
               <ul className="flex flex-wrap gap-2">
                 {hidden.map((id) => {
-                  const u = getMockUniversityById(id);
+                  const u = universities.find((x) => x.id === id);
                   return (
                     <li key={id}>
                       <span className="text-[length:var(--text-fluid-sm)]">
@@ -421,7 +433,13 @@ export function UnifiedShell() {
               "px-[calc(50vw-11rem)] py-6 scrollbar-thin scroll-smooth -mx-4",
             )}
           >
-            {visibleFeed.length === 0 ? (
+            {feedLoading ? (
+              <div className="flex gap-6 items-center">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="shrink-0 h-[68vh] w-[21rem] rounded-[28px] bg-gray-100 animate-pulse" style={{ opacity: 1 - i * 0.2 }} />
+                ))}
+              </div>
+            ) : visibleFeed.length === 0 ? (
               <p className="text-[color:var(--color-muted)] mx-auto">
                 Все скрыты. Верни из списка «Скрытые» или сброс ниже.
               </p>
@@ -462,8 +480,8 @@ export function UnifiedShell() {
                     />
                     <p className="text-[length:var(--text-fluid-xs)] text-[color:var(--color-muted)] text-right">
                       Источник:{" "}
-                      {fitState.data.source === "anthropic"
-                        ? "Claude AI"
+                      {fitState.data.source === "openai"
+                        ? "GPT AI"
                         : "mock / без ключа"}
                     </p>
                   </div>
