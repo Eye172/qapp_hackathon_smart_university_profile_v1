@@ -4,108 +4,97 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
+import { motion, AnimatePresence } from "framer-motion";
 import { AIChatSheet } from "@/components/shared/ai-chat-sheet";
 import {
+  Calendar,
   Compass,
-  User,
-  Sparkles,
   LogOut,
+  Search,
+  Settings,
+  Sparkles,
+  User,
 } from "@/components/ui/icon";
 import { cn } from "@/lib/tailwind-utils";
 
-/* ─── Tooltip wrapper ───────────────────────────────────────────────────── */
-function Tip({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="group relative flex items-center justify-center">
-      {children}
-      <span
-        className={cn(
-          "pointer-events-none absolute left-[calc(100%+10px)]",
-          "rounded-lg px-2.5 py-1 text-xs font-medium whitespace-nowrap",
-          "bg-[color:var(--color-text)] text-white",
-          "opacity-0 translate-x-[-4px] group-hover:opacity-100 group-hover:translate-x-0",
-          "transition-all duration-200 ease-out",
-          "shadow-md",
-        )}
-        style={{ zIndex: "var(--z-modal)" }}
-      >
-        {label}
-        {/* Arrow */}
-        <span className="absolute -left-[5px] top-1/2 -translate-y-1/2 border-[5px] border-transparent border-r-[color:var(--color-text)]" />
-      </span>
-    </div>
-  );
-}
+const SPRING = { type: "spring" as const, stiffness: 380, damping: 30 };
+const LABEL_SPRING = { type: "spring" as const, stiffness: 420, damping: 32 };
 
-/* ─── Nav link item ──────────────────────────────────────────────────────── */
-function SidebarLink({
+/* ─── Nav items ──────────────────────────────────────────────────────────── */
+const NAV_ITEMS = [
+  { href: "/feed",     label: "Discover",  icon: Compass,  matchPaths: ["/feed", "/university"] },
+  { href: "/search",   label: "Search",    icon: Search,   matchPaths: ["/search"] },
+  { href: "/timeline", label: "Deadlines", icon: Calendar, matchPaths: ["/timeline"] },
+  { href: "/profile",  label: "Profile",   icon: User,     matchPaths: ["/profile"] },
+];
+
+/* ─── Single nav row ──────────────────────────────────────────────────────── */
+function NavRow({
   href,
   label,
-  icon,
-  active = false,
+  icon: Icon,
+  active,
+  expanded,
 }: {
   href: string;
   label: string;
-  icon: React.ReactNode;
-  active?: boolean;
+  icon: React.ElementType;
+  active: boolean;
+  expanded: boolean;
 }) {
   return (
-    <Tip label={label}>
-      <Link
-        href={href}
-        className={cn(
-          "flex items-center justify-center w-10 h-10 rounded-xl",
-          "transition-all duration-200 ease-out",
-          active
-            ? "bg-[color:var(--color-accent)] text-white shadow-md"
-            : "text-[color:var(--color-muted)] hover:bg-white/60 hover:text-[color:var(--color-text)]",
+    <Link
+      href={href}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "relative flex items-center h-10 rounded-xl overflow-hidden",
+        "transition-colors duration-150 select-none",
+        active
+          ? "bg-blue-600 text-white shadow-md shadow-blue-200"
+          : "text-gray-500 hover:bg-white/70 hover:text-gray-900",
+      )}
+      style={{ width: "100%" }}
+    >
+      {/* Icon — fixed 40px zone */}
+      <span className="shrink-0 w-10 flex items-center justify-center">
+        <Icon size={17} />
+      </span>
+
+      {/* Label — slides in when expanded */}
+      <AnimatePresence>
+        {expanded && (
+          <motion.span
+            key="label"
+            initial={{ opacity: 0, x: -6 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -6 }}
+            transition={LABEL_SPRING}
+            className="text-[13px] font-medium whitespace-nowrap leading-none"
+          >
+            {label}
+          </motion.span>
         )}
-        aria-current={active ? "page" : undefined}
-      >
-        {icon}
-      </Link>
-    </Tip>
+      </AnimatePresence>
+
+      {/* Active left bar */}
+      {active && (
+        <motion.span
+          layoutId="activeBar"
+          className="absolute left-0 top-2 bottom-2 w-0.5 rounded-full bg-white/50"
+        />
+      )}
+    </Link>
   );
 }
 
-/* ─── Button item (no href) ─────────────────────────────────────────────── */
-function SidebarButton({
-  label,
-  icon,
-  onClick,
-  className,
-}: {
-  label: string;
-  icon: React.ReactNode;
-  onClick?: () => void;
-  className?: string;
-}) {
-  return (
-    <Tip label={label}>
-      <button
-        type="button"
-        onClick={onClick}
-        className={cn(
-          "flex items-center justify-center w-10 h-10 rounded-xl",
-          "transition-all duration-200 ease-out",
-          "text-[color:var(--color-muted)] hover:bg-white/60 hover:text-[color:var(--color-text)]",
-          className,
-        )}
-      >
-        {icon}
-      </button>
-    </Tip>
-  );
+/* ─── GlassSidebar ───────────────────────────────────────────────────────── */
+export interface GlassSidebarProps {
+  expanded: boolean;
+  onMouseEnter: () => void;
+  onMouseLeave: () => void;
 }
 
-/* ─── Main Sidebar ───────────────────────────────────────────────────────── */
-export function Sidebar() {
+export function GlassSidebar({ expanded, onMouseEnter, onMouseLeave }: GlassSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { status } = useSession();
@@ -117,73 +106,163 @@ export function Sidebar() {
   }
 
   return (
-    <aside
-      className="fixed left-0 top-0 bottom-0 glass-sidebar flex flex-col items-center py-5 gap-2"
-      style={{ width: "var(--sidebar-w)", zIndex: "var(--z-sidebar)" }}
+    <motion.aside
+      animate={{ width: expanded ? 240 : 64 }}
+      transition={SPRING}
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
+      className="fixed left-0 top-0 bottom-0 flex flex-col py-5 overflow-hidden"
+      style={{
+        zIndex: "var(--z-sidebar)",
+        background: "rgba(255,255,255,0.82)",
+        backdropFilter: "blur(20px) saturate(160%)",
+        borderRight: "1px solid rgba(37,99,235,0.08)",
+        boxShadow: "4px 0 24px -8px rgba(15,23,42,0.07)",
+        willChange: "width",
+      }}
       aria-label="Main navigation"
     >
-      {/* Brand mark */}
+      {/* Brand */}
       <Link
         href="/feed"
-        className={cn(
-          "mb-4 font-display text-xl leading-none",
-          "text-[color:var(--color-accent)] hover:opacity-80 transition-opacity",
-        )}
+        className="flex items-center h-10 px-3.5 mb-5 gap-3 select-none"
         aria-label="QApp home"
       >
-        Q
+        <span className="shrink-0 w-[33px] h-[33px] flex items-center justify-center rounded-xl bg-blue-600 text-white text-[15px] font-bold leading-none shadow-md shadow-blue-200">
+          Q
+        </span>
+        <AnimatePresence>
+          {expanded && (
+            <motion.span
+              key="brand-text"
+              initial={{ opacity: 0, x: -6 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -6 }}
+              transition={LABEL_SPRING}
+              className="text-[15px] font-bold text-gray-900 whitespace-nowrap"
+            >
+              App
+            </motion.span>
+          )}
+        </AnimatePresence>
       </Link>
 
       {/* Primary nav */}
-      <nav className="flex flex-col items-center gap-1.5 w-full px-3">
-        <SidebarLink
-          href="/feed"
-          label="Discover"
-          icon={<Compass size={18} />}
-          active={!!pathname?.startsWith("/feed") || !!pathname?.startsWith("/university")}
-        />
-        <SidebarLink
-          href="/profile"
-          label="Profile"
-          icon={<User size={18} />}
-          active={!!pathname?.startsWith("/profile")}
-        />
+      <nav className="flex flex-col gap-1 px-3">
+        {NAV_ITEMS.map(({ href, label, icon, matchPaths }) => {
+          const active = matchPaths.some((p) => pathname?.startsWith(p));
+          return (
+            <NavRow
+              key={href}
+              href={href}
+              label={label}
+              icon={icon}
+              active={active}
+              expanded={expanded}
+            />
+          );
+        })}
       </nav>
 
       {/* Divider */}
-      <div className="w-7 border-t border-[color:var(--color-border)] my-1" />
+      <div className="mx-4 my-3 border-t border-blue-50" />
 
-      {/* AI Advisor chat */}
-      <AIChatSheet
-        trigger={
-          <Tip label="AI Advisor">
+      {/* AI Advisor */}
+      <div className="px-3">
+        <AIChatSheet
+          trigger={
             <button
               type="button"
               className={cn(
-                "flex items-center justify-center w-10 h-10 rounded-xl",
-                "transition-all duration-200 ease-out",
-                "bg-[color:var(--color-accent)]/10 text-[color:var(--color-accent)]",
-                "hover:bg-[color:var(--color-accent)] hover:text-white",
+                "flex items-center h-10 w-full rounded-xl overflow-hidden",
+                "bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors duration-150",
               )}
             >
-              <Sparkles size={18} />
+              <span className="shrink-0 w-10 flex items-center justify-center">
+                <Sparkles size={17} />
+              </span>
+              <AnimatePresence>
+                {expanded && (
+                  <motion.span
+                    key="ai-label"
+                    initial={{ opacity: 0, x: -6 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -6 }}
+                    transition={LABEL_SPRING}
+                    className="text-[13px] font-medium whitespace-nowrap leading-none"
+                  >
+                    AI Advisor
+                  </motion.span>
+                )}
+              </AnimatePresence>
             </button>
-          </Tip>
-        }
-      />
+          }
+        />
+      </div>
 
       {/* Spacer */}
       <div className="flex-1" />
 
-      {/* Sign out */}
-      {status === "authenticated" && (
-        <SidebarButton
-          label="Sign out"
-          icon={<LogOut size={18} />}
-          onClick={handleSignOut}
-          className="hover:bg-red-50 hover:text-red-600"
-        />
-      )}
-    </aside>
+      {/* Bottom controls */}
+      <div className="flex flex-col gap-1 px-3">
+        {/* Settings */}
+        <Link
+          href="/settings"
+          className={cn(
+            "flex items-center h-10 rounded-xl overflow-hidden",
+            "text-gray-500 hover:bg-white/70 hover:text-gray-900 transition-colors duration-150",
+            pathname?.startsWith("/settings") && "bg-blue-600 text-white",
+          )}
+        >
+          <span className="shrink-0 w-10 flex items-center justify-center">
+            <Settings size={17} />
+          </span>
+          <AnimatePresence>
+            {expanded && (
+              <motion.span
+                key="settings-label"
+                initial={{ opacity: 0, x: -6 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -6 }}
+                transition={LABEL_SPRING}
+                className="text-[13px] font-medium whitespace-nowrap leading-none"
+              >
+                Settings
+              </motion.span>
+            )}
+          </AnimatePresence>
+        </Link>
+
+        {/* Sign out */}
+        {status === "authenticated" && (
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="flex items-center h-10 w-full rounded-xl overflow-hidden text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors duration-150"
+          >
+            <span className="shrink-0 w-10 flex items-center justify-center">
+              <LogOut size={17} />
+            </span>
+            <AnimatePresence>
+              {expanded && (
+                <motion.span
+                  key="logout-label"
+                  initial={{ opacity: 0, x: -6 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -6 }}
+                  transition={LABEL_SPRING}
+                  className="text-[13px] font-medium whitespace-nowrap leading-none"
+                >
+                  Sign out
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </button>
+        )}
+      </div>
+    </motion.aside>
   );
 }
+
+/* ─── Legacy export kept for compatibility ───────────────────────────────── */
+export { GlassSidebar as Sidebar };

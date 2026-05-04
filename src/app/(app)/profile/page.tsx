@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { useSessionStore } from "@/store/useSessionStore";
 import { useAlgorithmStore } from "@/store/useAlgorithmStore";
 import { ActionButton } from "@/components/ui/button";
@@ -9,12 +10,167 @@ import { TagPill } from "@/components/ui/badge";
 import { RequirementRow } from "@/components/profile/requirement-row";
 import { PreferencesEditor } from "@/components/profile/preferences-editor";
 import { cn } from "@/lib/tailwind-utils";
-import type { StudyLevel, DocumentStatus } from "@/lib/types";
+import type { StudyLevel, DocumentStatus, IUniversityProfile } from "@/lib/types";
 
 const GRADE_LEVELS = [9, 10, 11, 12];
 const GPA_SCALES = [4.0, 5.0, 10.0, 100] as const;
 const STUDY_LEVELS: StudyLevel[] = ["bachelor", "master", "phd"];
 
+/* ─── Mini university card ───────────────────────────────────────────────── */
+function UniMiniCard({
+  id,
+  universitiesMap,
+  onAction,
+  actionLabel,
+  actionClass,
+}: {
+  id: string;
+  universitiesMap: Record<string, IUniversityProfile>;
+  onAction: (id: string) => void;
+  actionLabel: string;
+  actionClass?: string;
+}) {
+  const router = useRouter();
+  const uni = universitiesMap[id];
+  const name = uni?.name ?? id;
+  const country = uni?.country ?? "";
+  const rank = uni?.worldRank;
+
+  return (
+    <div
+      className={cn(
+        "group flex items-center justify-between gap-3 px-3 py-2.5 rounded-2xl",
+        "border border-[color:var(--color-border)] bg-[color:var(--color-surface)]",
+        "hover:border-[color:var(--color-accent)]/40 hover:bg-[color:var(--color-accent)]/5",
+        "transition-colors duration-150 cursor-pointer",
+      )}
+      onClick={() => router.push(`/university/${id}`)}
+    >
+      <div className="min-w-0 flex-1">
+        <p className="text-[length:var(--text-fluid-sm)] font-medium leading-snug truncate">
+          {name}
+        </p>
+        {(country || rank) && (
+          <p className="text-[length:var(--text-fluid-xs)] text-[color:var(--color-muted)] truncate">
+            {[country, rank ? `#${rank}` : ""].filter(Boolean).join(" · ")}
+          </p>
+        )}
+      </div>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onAction(id);
+        }}
+        className={cn(
+          "shrink-0 text-[length:var(--text-fluid-xs)] rounded-full px-2.5 py-1",
+          "border border-transparent transition-colors duration-150",
+          "hover:border-current",
+          actionClass ?? "text-[color:var(--color-muted)] hover:text-red-500",
+        )}
+      >
+        {actionLabel}
+      </button>
+    </div>
+  );
+}
+
+/* ─── Two-column saved / excluded panel ─────────────────────────────────── */
+function UniversityLists({
+  saved,
+  hidden,
+  universitiesMap,
+  unsaveNode,
+  unhideNode,
+}: {
+  saved: string[];
+  hidden: string[];
+  universitiesMap: Record<string, IUniversityProfile>;
+  unsaveNode: (id: string) => void;
+  unhideNode: (id: string) => void;
+}) {
+  return (
+    <section className="bg-white rounded-3xl border border-[color:var(--color-border)] p-6 space-y-4">
+      <h2 className="font-display text-[length:var(--text-fluid-xl)]">
+        My universities
+      </h2>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Saved */}
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-[length:var(--text-fluid-sm)] font-medium">
+              Saved
+            </span>
+            <TagPill variant="success">{saved.length}</TagPill>
+          </div>
+          <div
+            className={cn(
+              "rounded-2xl border border-[color:var(--color-border)]",
+              "bg-[color:var(--color-surface-2,#f9f9f9)]",
+              "p-2 flex flex-col gap-1.5 overflow-y-auto",
+              saved.length > 0 ? "min-h-[120px] max-h-[300px]" : "h-20",
+            )}
+          >
+            {saved.length === 0 ? (
+              <p className="text-[length:var(--text-fluid-xs)] text-[color:var(--color-muted)] text-center m-auto">
+                No saved universities yet
+              </p>
+            ) : (
+              saved.map((id) => (
+                <UniMiniCard
+                  key={id}
+                  id={id}
+                  universitiesMap={universitiesMap}
+                  onAction={unsaveNode}
+                  actionLabel="remove"
+                  actionClass="text-[color:var(--color-muted)] hover:text-red-500"
+                />
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Hidden / Excluded */}
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <span className="text-[length:var(--text-fluid-sm)] font-medium">
+              Excluded
+            </span>
+            <TagPill variant="warning">{hidden.length}</TagPill>
+          </div>
+          <div
+            className={cn(
+              "rounded-2xl border border-[color:var(--color-border)]",
+              "bg-[color:var(--color-surface-2,#f9f9f9)]",
+              "p-2 flex flex-col gap-1.5 overflow-y-auto",
+              hidden.length > 0 ? "min-h-[120px] max-h-[300px]" : "h-20",
+            )}
+          >
+            {hidden.length === 0 ? (
+              <p className="text-[length:var(--text-fluid-xs)] text-[color:var(--color-muted)] text-center m-auto">
+                No excluded universities
+              </p>
+            ) : (
+              hidden.map((id) => (
+                <UniMiniCard
+                  key={id}
+                  id={id}
+                  universitiesMap={universitiesMap}
+                  onAction={unhideNode}
+                  actionLabel="restore"
+                  actionClass="text-[color:var(--color-accent)] hover:text-[color:var(--color-accent-dark,#6366f1)]"
+                />
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─── Page ───────────────────────────────────────────────────────────────── */
 export default function ProfilePage() {
   const { data: session } = useSession();
   const profile = useSessionStore((s) => s.profile);
@@ -24,6 +180,22 @@ export default function ProfilePage() {
   const hidden = useAlgorithmStore((s) => s.hiddenUniversities);
   const unsaveNode = useAlgorithmStore((s) => s.unsaveNode);
   const unhideNode = useAlgorithmStore((s) => s.unhideNode);
+
+  // University name resolution
+  const [universitiesMap, setUniversitiesMap] = React.useState<
+    Record<string, IUniversityProfile>
+  >({});
+
+  React.useEffect(() => {
+    fetch("/api/universities")
+      .then((r) => r.json())
+      .then((data: IUniversityProfile[]) => {
+        const map: Record<string, IUniversityProfile> = {};
+        for (const u of data) map[u.id] = u;
+        setUniversitiesMap(map);
+      })
+      .catch(() => {});
+  }, []);
 
   // Local form state
   const [fullName, setFullName] = React.useState(profile.fullName);
@@ -109,8 +281,14 @@ export default function ProfilePage() {
   const verified = profile.documents.filter((d) => d.status === "verified").length;
   const total = profile.documents.length;
 
+  const inputCls = cn(
+    "rounded-2xl border border-[color:var(--color-border)] px-4 py-2.5",
+    "bg-white/80 text-[length:var(--text-fluid-sm)] outline-none",
+    "focus:border-[color:var(--color-accent)] focus:ring-2 focus:ring-[color:var(--color-accent)]/20",
+  );
+
   return (
-    <main className="min-h-screen pt-24 pb-16 px-6 max-w-4xl mx-auto space-y-10">
+    <main className="min-h-screen pt-8 pb-16 px-6 max-w-4xl mx-auto space-y-8">
       {/* Header */}
       <header className="space-y-1">
         <h1 className="font-display text-[length:var(--text-fluid-2xl)]">
@@ -130,178 +308,69 @@ export default function ProfilePage() {
         <form onSubmit={handleSave} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <label className="flex flex-col gap-1">
-              <span className="text-[length:var(--text-fluid-xs)] text-[color:var(--color-muted)]">
-                Full name
-              </span>
-              <input
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className={cn(
-                  "rounded-2xl border border-[color:var(--color-border)] px-4 py-2.5",
-                  "bg-white/80 text-[length:var(--text-fluid-sm)] outline-none",
-                  "focus:border-[color:var(--color-accent)] focus:ring-2 focus:ring-[color:var(--color-accent)]/20",
-                )}
-              />
+              <span className="text-[length:var(--text-fluid-xs)] text-[color:var(--color-muted)]">Full name</span>
+              <input value={fullName} onChange={(e) => setFullName(e.target.value)} className={inputCls} />
             </label>
 
             <label className="flex flex-col gap-1">
-              <span className="text-[length:var(--text-fluid-xs)] text-[color:var(--color-muted)]">
-                Nationality
-              </span>
-              <input
-                value={nationality}
-                onChange={(e) => setNationality(e.target.value)}
-                className={cn(
-                  "rounded-2xl border border-[color:var(--color-border)] px-4 py-2.5",
-                  "bg-white/80 text-[length:var(--text-fluid-sm)] outline-none",
-                  "focus:border-[color:var(--color-accent)] focus:ring-2 focus:ring-[color:var(--color-accent)]/20",
-                )}
-              />
+              <span className="text-[length:var(--text-fluid-xs)] text-[color:var(--color-muted)]">Nationality</span>
+              <input value={nationality} onChange={(e) => setNationality(e.target.value)} className={inputCls} />
             </label>
 
             <label className="flex flex-col gap-1">
-              <span className="text-[length:var(--text-fluid-xs)] text-[color:var(--color-muted)]">
-                Current country
-              </span>
-              <input
-                value={currentCountry}
-                onChange={(e) => setCurrentCountry(e.target.value)}
-                className={cn(
-                  "rounded-2xl border border-[color:var(--color-border)] px-4 py-2.5",
-                  "bg-white/80 text-[length:var(--text-fluid-sm)] outline-none",
-                  "focus:border-[color:var(--color-accent)] focus:ring-2 focus:ring-[color:var(--color-accent)]/20",
-                )}
-              />
+              <span className="text-[length:var(--text-fluid-xs)] text-[color:var(--color-muted)]">Current country</span>
+              <input value={currentCountry} onChange={(e) => setCurrentCountry(e.target.value)} className={inputCls} />
             </label>
 
             <label className="flex flex-col gap-1">
-              <span className="text-[length:var(--text-fluid-xs)] text-[color:var(--color-muted)]">
-                Grade level
-              </span>
+              <span className="text-[length:var(--text-fluid-xs)] text-[color:var(--color-muted)]">Grade level</span>
               <select
                 value={gradeLevel}
                 onChange={(e) => setGradeLevel(e.target.value)}
-                className={cn(
-                  "rounded-2xl border border-[color:var(--color-border)] px-4 py-2.5",
-                  "bg-white/80 text-[length:var(--text-fluid-sm)] outline-none",
-                  "focus:border-[color:var(--color-accent)]",
-                )}
+                className={cn(inputCls, "focus:ring-0")}
               >
                 {GRADE_LEVELS.map((g) => (
-                  <option key={g} value={g}>
-                    Grade {g}
-                  </option>
+                  <option key={g} value={g}>Grade {g}</option>
                 ))}
               </select>
             </label>
 
             <label className="flex flex-col gap-1">
-              <span className="text-[length:var(--text-fluid-xs)] text-[color:var(--color-muted)]">
-                GPA
-              </span>
-              <input
-                type="number"
-                step="0.01"
-                value={gpa}
-                onChange={(e) => setGpa(e.target.value)}
-                className={cn(
-                  "rounded-2xl border border-[color:var(--color-border)] px-4 py-2.5",
-                  "bg-white/80 text-[length:var(--text-fluid-sm)] outline-none",
-                  "focus:border-[color:var(--color-accent)] focus:ring-2 focus:ring-[color:var(--color-accent)]/20",
-                )}
-              />
+              <span className="text-[length:var(--text-fluid-xs)] text-[color:var(--color-muted)]">GPA</span>
+              <input type="number" step="0.01" value={gpa} onChange={(e) => setGpa(e.target.value)} className={inputCls} />
             </label>
 
             <label className="flex flex-col gap-1">
-              <span className="text-[length:var(--text-fluid-xs)] text-[color:var(--color-muted)]">
-                GPA scale
-              </span>
+              <span className="text-[length:var(--text-fluid-xs)] text-[color:var(--color-muted)]">GPA scale</span>
               <select
                 value={gpaScale}
                 onChange={(e) => setGpaScale(e.target.value)}
-                className={cn(
-                  "rounded-2xl border border-[color:var(--color-border)] px-4 py-2.5",
-                  "bg-white/80 text-[length:var(--text-fluid-sm)] outline-none",
-                )}
+                className={cn(inputCls, "focus:ring-0")}
               >
                 {GPA_SCALES.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
+                  <option key={s} value={s}>{s}</option>
                 ))}
               </select>
             </label>
 
             <label className="flex flex-col gap-1">
-              <span className="text-[length:var(--text-fluid-xs)] text-[color:var(--color-muted)]">
-                IELTS overall
-              </span>
-              <input
-                type="number"
-                step="0.5"
-                min="0"
-                max="9"
-                value={ieltsOverall}
-                onChange={(e) => setIeltsOverall(e.target.value)}
-                className={cn(
-                  "rounded-2xl border border-[color:var(--color-border)] px-4 py-2.5",
-                  "bg-white/80 text-[length:var(--text-fluid-sm)] outline-none",
-                  "focus:border-[color:var(--color-accent)] focus:ring-2 focus:ring-[color:var(--color-accent)]/20",
-                )}
-              />
+              <span className="text-[length:var(--text-fluid-xs)] text-[color:var(--color-muted)]">IELTS overall</span>
+              <input type="number" step="0.5" min="0" max="9" value={ieltsOverall} onChange={(e) => setIeltsOverall(e.target.value)} className={inputCls} />
             </label>
 
             <label className="flex flex-col gap-1">
-              <span className="text-[length:var(--text-fluid-xs)] text-[color:var(--color-muted)]">
-                IELTS writing
-              </span>
-              <input
-                type="number"
-                step="0.5"
-                min="0"
-                max="9"
-                value={ieltsWriting}
-                onChange={(e) => setIeltsWriting(e.target.value)}
-                className={cn(
-                  "rounded-2xl border border-[color:var(--color-border)] px-4 py-2.5",
-                  "bg-white/80 text-[length:var(--text-fluid-sm)] outline-none",
-                  "focus:border-[color:var(--color-accent)] focus:ring-2 focus:ring-[color:var(--color-accent)]/20",
-                )}
-              />
+              <span className="text-[length:var(--text-fluid-xs)] text-[color:var(--color-muted)]">IELTS writing</span>
+              <input type="number" step="0.5" min="0" max="9" value={ieltsWriting} onChange={(e) => setIeltsWriting(e.target.value)} className={inputCls} />
             </label>
 
             <label className="flex flex-col gap-1">
-              <span className="text-[length:var(--text-fluid-xs)] text-[color:var(--color-muted)]">
-                SAT total (optional)
-              </span>
-              <input
-                type="number"
-                value={satTotal}
-                onChange={(e) => setSatTotal(e.target.value)}
-                placeholder="e.g. 1380"
-                className={cn(
-                  "rounded-2xl border border-[color:var(--color-border)] px-4 py-2.5",
-                  "bg-white/80 text-[length:var(--text-fluid-sm)] outline-none",
-                  "focus:border-[color:var(--color-accent)] focus:ring-2 focus:ring-[color:var(--color-accent)]/20",
-                )}
-              />
+              <span className="text-[length:var(--text-fluid-xs)] text-[color:var(--color-muted)]">SAT total (optional)</span>
+              <input type="number" value={satTotal} onChange={(e) => setSatTotal(e.target.value)} placeholder="e.g. 1380" className={inputCls} />
             </label>
 
             <label className="flex flex-col gap-1">
-              <span className="text-[length:var(--text-fluid-xs)] text-[color:var(--color-muted)]">
-                Budget (USD/year)
-              </span>
-              <input
-                type="number"
-                value={budget}
-                onChange={(e) => setBudget(e.target.value)}
-                placeholder="e.g. 25000"
-                className={cn(
-                  "rounded-2xl border border-[color:var(--color-border)] px-4 py-2.5",
-                  "bg-white/80 text-[length:var(--text-fluid-sm)] outline-none",
-                  "focus:border-[color:var(--color-accent)] focus:ring-2 focus:ring-[color:var(--color-accent)]/20",
-                )}
-              />
+              <span className="text-[length:var(--text-fluid-xs)] text-[color:var(--color-muted)]">Budget (USD/year)</span>
+              <input type="number" value={budget} onChange={(e) => setBudget(e.target.value)} placeholder="e.g. 25000" className={inputCls} />
             </label>
           </div>
 
@@ -313,11 +382,7 @@ export default function ProfilePage() {
               value={interests}
               onChange={(e) => setInterests(e.target.value)}
               placeholder="Computer Science, AI, Product Design"
-              className={cn(
-                "rounded-2xl border border-[color:var(--color-border)] px-4 py-2.5",
-                "bg-white/80 text-[length:var(--text-fluid-sm)] outline-none",
-                "focus:border-[color:var(--color-accent)] focus:ring-2 focus:ring-[color:var(--color-accent)]/20",
-              )}
+              className={inputCls}
             />
           </label>
 
@@ -328,15 +393,10 @@ export default function ProfilePage() {
             <select
               value={studyLevel}
               onChange={(e) => setStudyLevel(e.target.value as StudyLevel)}
-              className={cn(
-                "rounded-2xl border border-[color:var(--color-border)] px-4 py-2.5",
-                "bg-white/80 text-[length:var(--text-fluid-sm)] outline-none",
-              )}
+              className={cn(inputCls, "focus:ring-0")}
             >
               {STUDY_LEVELS.map((l) => (
-                <option key={l} value={l}>
-                  {l}
-                </option>
+                <option key={l} value={l}>{l}</option>
               ))}
             </select>
           </label>
@@ -345,9 +405,7 @@ export default function ProfilePage() {
             <ActionButton type="submit" variant="primary" size="lg">
               Save changes
             </ActionButton>
-            {saved_ ? (
-              <TagPill variant="success">Saved ✓</TagPill>
-            ) : null}
+            {saved_ ? <TagPill variant="success">Saved ✓</TagPill> : null}
           </div>
         </form>
       </section>
@@ -355,9 +413,7 @@ export default function ProfilePage() {
       {/* Documents */}
       <section className="bg-white rounded-3xl border border-[color:var(--color-border)] p-6 space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="font-display text-[length:var(--text-fluid-xl)]">
-            Documents
-          </h2>
+          <h2 className="font-display text-[length:var(--text-fluid-xl)]">Documents</h2>
           <TagPill variant={verified === total ? "success" : "warning"}>
             {verified} / {total} ready
           </TagPill>
@@ -392,9 +448,7 @@ export default function ProfilePage() {
                 </div>
                 <button
                   type="button"
-                  onClick={() =>
-                    updateDocumentStatus(d.id, NEXT_STATUS[d.status])
-                  }
+                  onClick={() => updateDocumentStatus(d.id, NEXT_STATUS[d.status])}
                   className={cn(
                     "shrink-0 text-[length:var(--text-fluid-xs)] rounded-full px-3 py-1",
                     "border border-[color:var(--color-border)] text-[color:var(--color-muted)]",
@@ -410,32 +464,14 @@ export default function ProfilePage() {
         </div>
       </section>
 
-      {/* Saved universities */}
-      <section className="bg-white rounded-3xl border border-[color:var(--color-border)] p-6 space-y-4">
-        <h2 className="font-display text-[length:var(--text-fluid-xl)]">
-          Saved universities
-        </h2>
-        {saved.length === 0 ? (
-          <p className="text-[color:var(--color-muted)] text-[length:var(--text-fluid-sm)]">
-            None yet — save cards from the Discover feed.
-          </p>
-        ) : (
-          <ul className="flex flex-wrap gap-2">
-            {saved.map((id) => (
-              <li key={id} className="flex items-center gap-1.5">
-                <TagPill variant="neutral">{id}</TagPill>
-                <button
-                  type="button"
-                  className="text-[length:var(--text-fluid-xs)] text-[color:var(--color-muted)] underline"
-                  onClick={() => unsaveNode(id)}
-                >
-                  remove
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      {/* Saved & Excluded universities — two-column */}
+      <UniversityLists
+        saved={saved}
+        hidden={hidden}
+        universitiesMap={universitiesMap}
+        unsaveNode={unsaveNode}
+        unhideNode={unhideNode}
+      />
 
       {/* Preferences & priorities */}
       <section className="bg-white rounded-3xl border border-[color:var(--color-border)] p-6 space-y-4">
@@ -449,29 +485,6 @@ export default function ProfilePage() {
         </div>
         <PreferencesEditor />
       </section>
-
-      {/* Hidden universities */}
-      {hidden.length > 0 ? (
-        <section className="bg-white rounded-3xl border border-[color:var(--color-border)] p-6 space-y-4">
-          <h2 className="font-display text-[length:var(--text-fluid-xl)]">
-            Hidden universities
-          </h2>
-          <ul className="flex flex-wrap gap-2">
-            {hidden.map((id) => (
-              <li key={id} className="flex items-center gap-1.5">
-                <TagPill variant="warning">{id}</TagPill>
-                <button
-                  type="button"
-                  className="text-[length:var(--text-fluid-xs)] text-[color:var(--color-accent)] underline"
-                  onClick={() => unhideNode(id)}
-                >
-                  restore
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
     </main>
   );
 }

@@ -50,7 +50,7 @@ export const ProfileHero = React.forwardRef<HTMLElement, ProfileHeroProps>(
             />
           </motion.div>
           <div
-            className="absolute inset-0 bg-gradient-to-t from-[#F4ECE6] via-transparent to-black/30"
+            className="absolute inset-0 bg-gradient-to-t from-gray-50 via-transparent to-black/30"
             aria-hidden
           />
         </div>

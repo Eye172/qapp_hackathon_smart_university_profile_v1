@@ -3,24 +3,24 @@
 :root {
   color-scheme: light;
 
-  /* ── Palette ─────────────────────────────────────────────────── */
-  --color-bg:               #f0e8e0;
-  --color-bg-deep:          #e8ddd4;
+  /* ── QApp Corporate Palette ──────────────────────────────────── */
+  --color-bg:               #f8fafc;
+  --color-bg-deep:          #f1f5f9;
   --color-surface:          #ffffff;
-  --color-surface-glass:    rgba(255, 255, 255, 0.50);
-  --color-surface-frosted:  rgba(240, 232, 224, 0.72);
-  --color-accent:           #81583a;
-  --color-accent-secondary: #c2956e;
+  --color-surface-glass:    rgba(255, 255, 255, 0.80);
+  --color-surface-frosted:  rgba(248, 250, 252, 0.85);
+  --color-accent:           #2563eb;
+  --color-accent-secondary: #3b82f6;
   --color-accent-foreground:#ffffff;
-  --color-text:             #1e1a18;
-  --color-muted:            #6b5d52;
-  --color-border:           rgba(129, 88, 58, 0.14);
-  --color-border-strong:    rgba(129, 88, 58, 0.28);
+  --color-text:             #0f172a;
+  --color-muted:            #64748b;
+  --color-border:           rgba(37, 99, 235, 0.10);
+  --color-border-strong:    rgba(37, 99, 235, 0.22);
 
   /* Match / No-match tag colors */
-  --color-tag-match:        rgba(34, 197, 94, 0.18);
+  --color-tag-match:        rgba(34, 197, 94, 0.15);
   --color-tag-match-text:   #15803d;
-  --color-tag-no-match:     rgba(239, 68, 68, 0.15);
+  --color-tag-no-match:     rgba(239, 68, 68, 0.12);
   --color-tag-no-match-text:#b91c1c;
   --color-tag-neutral:      rgba(255, 255, 255, 0.22);
   --color-tag-neutral-text: #ffffff;
@@ -56,16 +56,16 @@
 
   /* ── Shadows ────────────────────────────────────────────────── */
   --shadow-glass:
-    0 1px 0 rgba(255,255,255,0.6) inset,
-    0 16px 48px -12px rgba(60,38,22,0.22),
-    0 2px 8px  -2px  rgba(60,38,22,0.10);
+    0 1px 0 rgba(255,255,255,0.8) inset,
+    0 16px 48px -12px rgba(15,23,42,0.12),
+    0 2px 8px  -2px  rgba(15,23,42,0.06);
 
   --shadow-card:
-    0 24px 64px -16px rgba(30,16,8,0.28),
-    0 4px  12px -4px  rgba(30,16,8,0.16);
+    0 24px 64px -16px rgba(15,23,42,0.18),
+    0 4px  12px -4px  rgba(15,23,42,0.10);
 
   --shadow-sidebar:
-    4px 0 32px -8px rgba(30,16,8,0.12);
+    4px 0 32px -8px rgba(15,23,42,0.08);
 }
 
 /* ── Tailwind theme bridge ───────────────────────────────────── */
@@ -130,7 +130,7 @@ body { overflow-x: hidden; }
   .glass-sidebar {
     backdrop-filter: saturate(180%) blur(24px);
     -webkit-backdrop-filter: saturate(180%) blur(24px);
-    background: rgba(240, 232, 224, 0.78);
+    background: rgba(255, 255, 255, 0.88);
     border-right: 1px solid var(--color-border);
     box-shadow: var(--shadow-sidebar);
   }
@@ -171,7 +171,7 @@ body { overflow-x: hidden; }
 
   /* Text gradient */
   .text-gradient {
-    background: linear-gradient(135deg, var(--color-accent) 0%, var(--color-accent-secondary) 100%);
+    background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 50%, #3b82f6 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;

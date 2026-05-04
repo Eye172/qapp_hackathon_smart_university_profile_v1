@@ -20,6 +20,7 @@ import {
   LogOut as LucideLogOut,
   Mail as LucideMail,
   MessageCircle as LucideMessageCircle,
+  Search as LucideSearch,
   Settings as LucideSettings,
   Sparkles as LucideSparkles,
   Star as LucideStar,
@@ -80,6 +81,7 @@ export const Home           = makeIcon(LucideHome,           "Icon.Home");
 export const LogOut         = makeIcon(LucideLogOut,         "Icon.LogOut");
 export const Mail           = makeIcon(LucideMail,           "Icon.Mail");
 export const MessageCircle  = makeIcon(LucideMessageCircle,  "Icon.MessageCircle");
+export const Search         = makeIcon(LucideSearch,         "Icon.Search");
 export const Settings       = makeIcon(LucideSettings,       "Icon.Settings");
 export const Sparkles       = makeIcon(LucideSparkles,       "Icon.Sparkles");
 export const Star           = makeIcon(LucideStar,           "Icon.Star");
@@ -109,6 +111,7 @@ export const Icon = {
   LogOut,
   Mail,
   MessageCircle,
+  Search,
   Settings,
   Sparkles,
   Star,
