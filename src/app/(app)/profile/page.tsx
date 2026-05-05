@@ -176,10 +176,19 @@ export default function ProfilePage() {
   const profile = useSessionStore((s) => s.profile);
   const updateProfile = useSessionStore((s) => s.updateProfile);
   const updateDocumentStatus = useSessionStore((s) => s.updateDocumentStatus);
+  const hydrateFromServer = useSessionStore((s) => s.hydrateFromServer);
   const saved = useAlgorithmStore((s) => s.savedUniversities);
   const hidden = useAlgorithmStore((s) => s.hiddenUniversities);
   const unsaveNode = useAlgorithmStore((s) => s.unsaveNode);
   const unhideNode = useAlgorithmStore((s) => s.unhideNode);
+
+  // Hydrate store from real DB profile on mount
+  React.useEffect(() => {
+    fetch("/api/profile")
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => { if (data) hydrateFromServer(data); })
+      .catch(() => {});
+  }, [hydrateFromServer]);
 
   // University name resolution
   const [universitiesMap, setUniversitiesMap] = React.useState<
@@ -280,10 +289,51 @@ export default function ProfilePage() {
 
   const verified = profile.documents.filter((d) => d.status === "verified").length;
   const total = profile.documents.length;
+  const [docUploading, setDocUploading] = React.useState<Record<string, boolean>>({});
+  const [docVerifying, setDocVerifying] = React.useState<Record<string, boolean>>({});
+  const [docVerifyReason, setDocVerifyReason] = React.useState<Record<string, string>>({});
+  const docFileRefs = React.useRef<Record<string, HTMLInputElement | null>>({});
+
+  async function handleDocVerify(docId: string) {
+    setDocVerifying((p) => ({ ...p, [docId]: true }));
+    setDocVerifyReason((p) => ({ ...p, [docId]: "" }));
+    try {
+      const res = await fetch(`/api/documents/${docId}/verify`, { method: "POST" });
+      const data = (await res.json()) as { status?: string; reason?: string; error?: string };
+      if (res.ok && data.status) {
+        updateDocumentStatus(docId, data.status as DocumentStatus);
+        setDocVerifyReason((p) => ({ ...p, [docId]: data.reason ?? "" }));
+      } else {
+        setDocVerifyReason((p) => ({ ...p, [docId]: data.error ?? "Verification failed." }));
+      }
+    } catch {
+      setDocVerifyReason((p) => ({ ...p, [docId]: "Network error." }));
+    }
+    setDocVerifying((p) => ({ ...p, [docId]: false }));
+  }
+
+  async function handleDocUpload(docId: string, e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setDocUploading((p) => ({ ...p, [docId]: true }));
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("docId", docId);
+      const res = await fetch("/api/documents/upload", { method: "POST", body: fd });
+      if (res.ok) {
+        const data = (await res.json()) as { fileName: string; status: string; url?: string };
+        updateDocumentStatus(docId, data.status as DocumentStatus);
+      }
+    } catch { /* swallow */ } finally {
+      setDocUploading((p) => ({ ...p, [docId]: false }));
+      e.target.value = "";
+    }
+  }
 
   const inputCls = cn(
     "rounded-2xl border border-[color:var(--color-border)] px-4 py-2.5",
-    "bg-white/80 text-[length:var(--text-fluid-sm)] outline-none",
+    "bg-[color:var(--color-surface)] text-[color:var(--color-text)] text-[length:var(--text-fluid-sm)] outline-none",
     "focus:border-[color:var(--color-accent)] focus:ring-2 focus:ring-[color:var(--color-accent)]/20",
   );
 
@@ -430,13 +480,6 @@ export default function ProfilePage() {
                     ? "rejected"
                     : "missing";
 
-            const NEXT_STATUS: Record<DocumentStatus, DocumentStatus> = {
-              pending: "uploaded",
-              uploaded: "verified",
-              verified: "pending",
-              rejected: "pending",
-            };
-
             return (
               <div key={d.id} className="flex items-center gap-3">
                 <div className="flex-1">
@@ -446,18 +489,55 @@ export default function ProfilePage() {
                     subtext={d.kind}
                   />
                 </div>
-                <button
-                  type="button"
-                  onClick={() => updateDocumentStatus(d.id, NEXT_STATUS[d.status])}
-                  className={cn(
-                    "shrink-0 text-[length:var(--text-fluid-xs)] rounded-full px-3 py-1",
-                    "border border-[color:var(--color-border)] text-[color:var(--color-muted)]",
-                    "hover:border-[color:var(--color-accent)] hover:text-[color:var(--color-accent)]",
-                    "ease-snappy transition-colors",
-                  )}
-                >
-                  Cycle status
-                </button>
+                {d.status !== "verified" && (
+                  <div className="flex items-center gap-2 shrink-0">
+                    <input
+                      ref={(el) => { docFileRefs.current[d.id] = el; }}
+                      type="file"
+                      accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                      className="hidden"
+                      onChange={(e) => handleDocUpload(d.id, e)}
+                    />
+                    <button
+                      type="button"
+                      disabled={docUploading[d.id]}
+                      onClick={() => docFileRefs.current[d.id]?.click()}
+                      className={cn(
+                        "text-[length:var(--text-fluid-xs)] rounded-full px-3 py-1",
+                        "border border-[color:var(--color-border)] text-[color:var(--color-muted)]",
+                        "hover:border-[color:var(--color-accent)] hover:text-[color:var(--color-accent)]",
+                        "ease-snappy transition-colors disabled:opacity-50",
+                      )}
+                    >
+                      {docUploading[d.id] ? "Uploading…" : d.status === "uploaded" ? "Replace" : "Upload"}
+                    </button>
+                    {d.status === "uploaded" && (
+                      <button
+                        type="button"
+                        disabled={docVerifying[d.id]}
+                        onClick={() => handleDocVerify(d.id)}
+                        title={docVerifyReason[d.id] || "Verify with GPT"}
+                        className={cn(
+                          "text-[length:var(--text-fluid-xs)] rounded-full px-3 py-1",
+                          "border border-indigo-200 text-indigo-600",
+                          "hover:bg-indigo-50 ease-snappy transition-colors disabled:opacity-50",
+                        )}
+                      >
+                        {docVerifying[d.id] ? "Verifying…" : "Verify"}
+                      </button>
+                    )}
+                  </div>
+                )}
+                {d.url && (
+                  <a
+                    href={d.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0 text-[length:var(--text-fluid-xs)] text-[color:var(--color-accent)] hover:underline"
+                  >
+                    View
+                  </a>
+                )}
               </div>
             );
           })}

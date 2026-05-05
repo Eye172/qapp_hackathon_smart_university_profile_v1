@@ -27,9 +27,9 @@ const SLOT_CONFIG: Record<
 
 const SPRING = {
   type: "spring" as const,
-  stiffness: 160,
-  damping: 38,
-  mass: 1.2,
+  stiffness: 100,
+  damping: 20,
+  mass: 1.0,
 };
 
 /* ─── Skeleton ───────────────────────────────────────────────────────────── */
@@ -174,10 +174,20 @@ export default function FeedPage() {
   }>;
 
   return (
-    <main className="h-screen flex flex-col overflow-hidden bg-gray-50">
+    <main className="h-screen flex flex-col overflow-hidden bg-[color:var(--color-bg)] relative">
+
+      {/* ── Wavy pattern background ─────────────────────────────── */}
+      <div className="pointer-events-none absolute inset-0 bg-pattern-waves" aria-hidden />
+
+      {/* ── Ambient glow ────────────────────────────────────────── */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] rounded-full opacity-[0.07]"
+        style={{ background: "radial-gradient(ellipse, rgba(37,99,235,1) 0%, transparent 70%)" }}
+      />
 
       {/* ── Header ──────────────────────────────────────────────── */}
-      <header className="shrink-0 flex items-center justify-between px-8 pt-7 pb-4">
+      <header className="shrink-0 flex items-center justify-between px-8 pt-7 pb-4 relative z-10">
         <div>
           <h1 className="font-display text-[22px] leading-none text-gray-900 tracking-tight">
             Discover
@@ -203,11 +213,11 @@ export default function FeedPage() {
       </header>
 
       {/* ── TOP HORIZONTAL RAIL ─────────────────────────────────── */}
-      <div className="shrink-0 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent mx-6" />
+      <div className="shrink-0 h-px bg-gradient-to-r from-transparent via-blue-200/60 to-transparent mx-6" />
 
       {/* ── Carousel Stage ──────────────────────────────────────── */}
       <section
-        className="flex-1 relative flex items-center justify-center overflow-hidden"
+        className="flex-1 relative flex items-center justify-center overflow-hidden z-10"
         aria-label="University carousel"
       >
         {loading ? (
@@ -322,10 +332,10 @@ export default function FeedPage() {
       </section>
 
       {/* ── BOTTOM HORIZONTAL RAIL ──────────────────────────────── */}
-      <div className="shrink-0 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent mx-6" />
+      <div className="shrink-0 h-px bg-gradient-to-r from-transparent via-blue-200/60 to-transparent mx-6" />
 
       {/* ── Nav controls ────────────────────────────────────────── */}
-      <footer className="shrink-0 flex items-center justify-center gap-3 py-4 px-8">
+      <footer className="shrink-0 flex items-center justify-center gap-3 py-4 px-8 relative z-10">
         {!loading && visible.length > 1 && (
           <>
             <span className="text-[10px] text-gray-400 tabular-nums w-12 text-right">

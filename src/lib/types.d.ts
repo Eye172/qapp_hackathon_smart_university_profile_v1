@@ -85,6 +85,9 @@ export interface IUniversityProfile {
   id: string;
   name: string;
   nameRu?: string;
+  nameKz?: string;
+  descriptionRu?: string;
+  descriptionKz?: string;
   country: string;
   city: string;
   founded?: number;

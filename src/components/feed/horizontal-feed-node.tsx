@@ -6,6 +6,8 @@ import type { IUniversityProfile } from "@/lib/types";
 import { AIFitRing } from "@/components/ui/ai-fit-ring";
 import { useAlgorithmStore } from "@/store/useAlgorithmStore";
 import { useSessionStore } from "@/store/useSessionStore";
+import { useSettingsStore } from "@/store/useSettingsStore";
+import { localizeUniversity } from "@/lib/i18n";
 import { cn } from "@/lib/tailwind-utils";
 
 /* ─── Tag classification ─────────────────────────────────────────────────── */
@@ -86,21 +88,19 @@ function classifyTag(tag: string, university: IUniversityProfile): TagVariant {
 }
 
 /* ─── Campus image with fallback ─────────────────────────────────────────── */
+const CAMPUS_FALLBACK = "https://images.unsplash.com/photo-1607237138185-eedd9c632b0b?auto=format&fit=crop&w=900&q=70";
+
 function CampusImage({ src, alt }: { src?: string; alt: string }) {
   const [errored, setErrored] = React.useState(false);
-  if (src && !errored) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={src}
-        alt={alt}
-        onError={() => setErrored(true)}
-        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-      />
-    );
-  }
+  const resolved = (!src || errored) ? CAMPUS_FALLBACK : src;
   return (
-    <div className="absolute inset-0 bg-gradient-to-br from-slate-200 via-slate-100 to-blue-100" aria-hidden />
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={resolved}
+      alt={alt}
+      onError={() => setErrored(true)}
+      className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+    />
   );
 }
 
@@ -184,6 +184,9 @@ export const HorizontalFeedNode = React.forwardRef<
   const saveNode = useAlgorithmStore((s) => s.saveNode);
   const hideNode = useAlgorithmStore((s) => s.hideNode);
 
+  const lang = useSettingsStore((s) => s.language);
+  const { name: localName } = localizeUniversity(university, lang);
+
   const isSaved = saved.includes(university.id);
   const isHidden = hidden.includes(university.id);
 
@@ -215,7 +218,7 @@ export const HorizontalFeedNode = React.forwardRef<
     >
       {/* ── Campus photo ─────────────────────────────────────────── */}
       <CampusImage
-        src={university.heroImageUrl ?? university.campusPhoto}
+        src={university.heroImageUrl ?? university.campusPhoto ?? university.photos?.[0]}
         alt={`${university.name} campus`}
       />
 
@@ -268,7 +271,7 @@ export const HorizontalFeedNode = React.forwardRef<
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <h3 className="text-white font-semibold text-[15px] leading-snug line-clamp-2">
-                {university.name}
+                {localName}
               </h3>
               {university.worldRank && (
                 <p className="text-[10px] text-white/50 mt-0.5 font-medium">

@@ -6,6 +6,8 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import type { IUniversityProfile } from "@/lib/types";
 import { TagPill } from "@/components/ui/badge";
 import { cn } from "@/lib/tailwind-utils";
+import { useSettingsStore } from "@/store/useSettingsStore";
+import { localizeUniversity } from "@/lib/i18n";
 
 const FALLBACK_HERO =
   "https://images.unsplash.com/photo-1607237138185-eedd9c632b0b?auto=format&fit=crop&w=1800&q=80";
@@ -16,6 +18,8 @@ export interface ProfileHeroProps extends React.HTMLAttributes<HTMLElement> {
 
 export const ProfileHero = React.forwardRef<HTMLElement, ProfileHeroProps>(
   function ProfileHero({ university, className, ...props }, ref) {
+    const lang = useSettingsStore((s) => s.language);
+    const { name: localName } = localizeUniversity(university, lang);
     const localRef = React.useRef<HTMLElement | null>(null);
     React.useImperativeHandle(ref, () => localRef.current as HTMLElement);
 
@@ -72,7 +76,7 @@ export const ProfileHero = React.forwardRef<HTMLElement, ProfileHeroProps>(
                   : ""}
               </p>
               <h1 className="font-display text-[length:var(--text-fluid-3xl)] leading-tight">
-                {university.name}
+                {localName}
               </h1>
               <p className="text-[length:var(--text-fluid-sm)] text-[color:var(--color-muted)]">
                 {university.city}, {university.country}

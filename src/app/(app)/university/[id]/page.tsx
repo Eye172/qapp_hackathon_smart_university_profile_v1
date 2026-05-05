@@ -19,6 +19,7 @@ import { AIFitSkeleton } from "@/components/profile/ai-fit-skeleton";
 import type { IStudentProfile, IUniversityProfile } from "@/lib/types";
 import type { UserPreferenceData } from "@/lib/preference-categories";
 import { MOCK_SESSION_PROFILE } from "@/store/useSessionStore";
+import { getServerT, getLang } from "@/lib/get-lang";
 
 /* ─── Markdown config ────────────────────────────────────────────────────── */
 const MD: Components = {
@@ -39,24 +40,25 @@ async function AIChartComments({
   studentProfile: IStudentProfile;
   preferences: UserPreferenceData[];
 }) {
-  const result = await fetchAIFit(university, studentProfile, preferences);
+  const [lang, t] = await Promise.all([getLang(), getServerT()]);
+  const result = await fetchAIFit(university, studentProfile, preferences, lang);
   let rich: { chartComments?: { scores?: string; majors?: string; financial?: string; demographics?: string } } | null = null;
   try { rich = JSON.parse(result.reasons); } catch { return null; }
   const cc = rich?.chartComments;
   if (!cc || !Object.values(cc).some(Boolean)) return null;
 
   const items = [
-    { key: "scores", label: "📊 Scores Analysis", text: cc.scores, color: "bg-blue-50 border-blue-100 text-blue-900" },
-    { key: "majors", label: "📚 Field Alignment", text: cc.majors, color: "bg-violet-50 border-violet-100 text-violet-900" },
-    { key: "financial", label: "💰 Financial Fit", text: cc.financial, color: "bg-emerald-50 border-emerald-100 text-emerald-900" },
-    { key: "demographics", label: "🌍 Campus Environment", text: cc.demographics, color: "bg-amber-50 border-amber-100 text-amber-900" },
+    { key: "scores",       label: "📊 " + t.university.aiBreakdown, text: cc.scores,       color: "bg-blue-50 border-blue-100 text-blue-900" },
+    { key: "majors",       label: "📚 " + t.university.programs,    text: cc.majors,       color: "bg-violet-50 border-violet-100 text-violet-900" },
+    { key: "financial",    label: "💰 " + t.university.scholarships, text: cc.financial,   color: "bg-emerald-50 border-emerald-100 text-emerald-900" },
+    { key: "demographics", label: "🌍 " + t.university.aiAdvisor,   text: cc.demographics, color: "bg-amber-50 border-amber-100 text-amber-900" },
   ].filter((i) => i.text);
 
   return (
-    <div className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 space-y-4">
+    <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm p-6 space-y-4">
       <div className="flex items-center gap-2">
         <span className="inline-flex items-center gap-1.5 text-indigo-600 bg-indigo-50 rounded-full px-3 py-1 text-xs font-bold border border-indigo-100">✦ GPT AI</span>
-        <h3 className="text-sm font-bold text-gray-900">Dr. Morgan&apos;s Chart Commentary</h3>
+        <h3 className="text-sm font-bold text-gray-900 dark:text-slate-100">{t.university.aiAdvisor}</h3>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {items.map(({ key, label, text, color }) => (
@@ -91,7 +93,8 @@ async function AIAdvisorSection({
   studentProfile: IStudentProfile;
   preferences: UserPreferenceData[];
 }) {
-  const result = await fetchAIFit(university, studentProfile, preferences);
+  const [lang, t] = await Promise.all([getLang(), getServerT()]);
+  const result = await fetchAIFit(university, studentProfile, preferences, lang);
 
   let rich: RichAIResponse | null = null;
   try { rich = JSON.parse(result.reasons) as RichAIResponse; } catch { /* legacy text */ }
@@ -104,26 +107,26 @@ async function AIAdvisorSection({
       <div className="space-y-5">
         {/* Summary */}
         {rich.summary && (
-          <div className="rounded-2xl p-4 bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100">
+          <div className="rounded-2xl p-4 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-950/35 dark:to-indigo-950/35 border border-blue-100 dark:border-blue-500/20">
             <p className="text-xs font-bold text-blue-700 mb-2 flex items-center gap-1.5">
               <span className="w-4 h-4 rounded-full bg-blue-600 text-white flex items-center justify-center text-[9px]">✦</span>
-              Counselor&apos;s Verdict
+              {t.university.aiVerdict}
             </p>
-            <p className="text-sm text-blue-900 leading-relaxed">{rich.summary}</p>
+            <p className="text-sm text-blue-900 dark:text-blue-100 leading-relaxed">{rich.summary}</p>
           </div>
         )}
 
         {/* Strengths + Gaps */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {rich.strengths && rich.strengths.length > 0 && (
-            <div className="rounded-2xl p-4 bg-emerald-50 border border-emerald-200/60 space-y-2">
+            <div className="rounded-2xl p-4 bg-emerald-50 dark:bg-emerald-950/25 border border-emerald-200/60 dark:border-emerald-500/25 space-y-2">
               <p className="text-xs font-bold text-emerald-800 flex items-center gap-1.5">
                 <span className="w-4 h-4 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[9px]">✓</span>
-                Why You&apos;re a Strong Candidate
+                {t.university.aiStrengths}
               </p>
               <ul className="space-y-2">
                 {rich.strengths.map((s, i) => (
-                  <li key={i} className="flex gap-2 text-sm text-emerald-900">
+                  <li key={i} className="flex gap-2 text-sm text-emerald-900 dark:text-emerald-100">
                     <span className="mt-0.5 text-emerald-400 font-bold shrink-0">›</span>
                     <span>{s}</span>
                   </li>
@@ -132,14 +135,14 @@ async function AIAdvisorSection({
             </div>
           )}
           {rich.gaps && rich.gaps.length > 0 && (
-            <div className="rounded-2xl p-4 bg-amber-50 border border-amber-200/60 space-y-2">
+            <div className="rounded-2xl p-4 bg-amber-50 dark:bg-amber-950/25 border border-amber-200/60 dark:border-amber-500/25 space-y-2">
               <p className="text-xs font-bold text-amber-800 flex items-center gap-1.5">
                 <span className="w-4 h-4 rounded-full bg-amber-500 text-white flex items-center justify-center text-[9px]">!</span>
-                Gaps to Address
+                {t.university.aiGaps}
               </p>
               <ul className="space-y-2">
                 {rich.gaps.map((g, i) => (
-                  <li key={i} className="flex gap-2 text-sm text-amber-900">
+                  <li key={i} className="flex gap-2 text-sm text-amber-900 dark:text-amber-100">
                     <span className="mt-0.5 text-amber-400 font-bold shrink-0">›</span>
                     <span>{g}</span>
                   </li>
@@ -153,10 +156,10 @@ async function AIAdvisorSection({
         {Object.keys(bd).length > 0 && (
           <div className="flex flex-wrap gap-2">
             {[
-              { key: "academic", label: "Academic", color: "bg-blue-100 text-blue-700" },
-              { key: "language", label: "Language", color: "bg-violet-100 text-violet-700" },
-              { key: "financial", label: "Financial", color: "bg-emerald-100 text-emerald-700" },
-              { key: "interest", label: "Interest Fit", color: "bg-amber-100 text-amber-700" },
+              { key: "academic",  label: t.university.aiBreakdown + " · Acad",  color: "bg-blue-100 text-blue-700" },
+              { key: "language",  label: t.university.aiBreakdown + " · Lang",  color: "bg-violet-100 text-violet-700" },
+              { key: "financial", label: t.university.aiBreakdown + " · Fin",   color: "bg-emerald-100 text-emerald-700" },
+              { key: "interest",  label: t.university.aiBreakdown + " · Int",   color: "bg-amber-100 text-amber-700" },
             ].map(({ key, label, color }) => {
               const val = bd[key as keyof typeof bd];
               if (!val) return null;
@@ -171,11 +174,11 @@ async function AIAdvisorSection({
 
         {/* Action Plan */}
         {rich.actionPlan && rich.actionPlan.length > 0 && (
-          <div className="rounded-2xl p-4 bg-gray-50 border border-gray-200 space-y-2">
-            <p className="text-xs font-bold text-gray-700">Your Action Plan</p>
+          <div className="rounded-2xl p-4 bg-gray-50 dark:bg-slate-950 border border-gray-200 dark:border-slate-800 space-y-2">
+            <p className="text-xs font-bold text-gray-700">{t.university.aiActionPlan}</p>
             <ol className="space-y-1.5">
               {rich.actionPlan.map((step, i) => (
-                <li key={i} className="flex gap-3 text-sm text-gray-700">
+                <li key={i} className="flex gap-3 text-sm text-gray-700 dark:text-slate-200">
                   <span className="shrink-0 w-5 h-5 rounded-full bg-indigo-600 text-white text-[10px] font-bold flex items-center justify-center">{i + 1}</span>
                   <span>{step.replace(/^\d+\.\s*/, "")}</span>
                 </li>
@@ -185,7 +188,7 @@ async function AIAdvisorSection({
         )}
 
         <p className="text-[10px] text-gray-400 text-right">
-          {result.source === "openai" ? "Powered by GPT-4o mini · OpenAI" : "Deterministic evaluation (no API key)"}
+          {result.source === "openai" ? "Powered by GPT-4o mini · OpenAI" : "Demo fallback — add OPENAI_API_KEY for real GPT"}
         </p>
       </div>
     );
@@ -194,26 +197,26 @@ async function AIAdvisorSection({
   /* ── Legacy / fallback text display ── */
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div className="rounded-2xl p-4 bg-emerald-50 border border-emerald-200/60 space-y-2">
+      <div className="rounded-2xl p-4 bg-emerald-50 dark:bg-emerald-950/25 border border-emerald-200/60 dark:border-emerald-500/25 space-y-2">
         <p className="text-xs font-semibold text-emerald-800 flex items-center gap-1.5">
           <span className="w-4 h-4 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[9px] font-bold">✓</span>
-          Strengths
+          {t.university.aiStrengths}
         </p>
-        <div className="text-emerald-900">
+        <div className="text-emerald-900 dark:text-emerald-100">
           <ReactMarkdown components={MD}>{result.reasons}</ReactMarkdown>
         </div>
       </div>
-      <div className="rounded-2xl p-4 bg-amber-50 border border-amber-200/60 space-y-2">
+      <div className="rounded-2xl p-4 bg-amber-50 dark:bg-amber-950/25 border border-amber-200/60 dark:border-amber-500/25 space-y-2">
         <p className="text-xs font-semibold text-amber-800 flex items-center gap-1.5">
           <span className="w-4 h-4 rounded-full bg-amber-500 text-white flex items-center justify-center text-[9px] font-bold">!</span>
-          Risks &amp; Gaps
+          {t.university.aiGaps}
         </p>
-        <div className="text-amber-900">
+        <div className="text-amber-900 dark:text-amber-100">
           <ReactMarkdown components={MD}>{result.gaps}</ReactMarkdown>
         </div>
       </div>
       <p className="col-span-full text-[10px] text-gray-400 text-right -mt-2">
-        {result.source === "openai" ? "Powered by GPT-4o mini · OpenAI" : "Deterministic evaluation (no API key)"}
+        {result.source === "openai" ? "Powered by GPT-4o mini · OpenAI" : "Demo fallback — add OPENAI_API_KEY for real GPT"}
       </p>
     </div>
   );
@@ -264,6 +267,7 @@ async function getUniversityFromDB(id: string): Promise<UniversityData | null> {
     id: u.id,
     name: u.name,
     nameRu: u.nameRu ?? undefined,
+    nameKz: uExt.nameKz ?? undefined,
     country: u.country,
     city: u.city,
     founded: u.founded ?? undefined,
@@ -290,6 +294,8 @@ async function getUniversityFromDB(id: string): Promise<UniversityData | null> {
     campusSizeHa: uExt.campusSizeHa ?? undefined,
     applicationDeadline: u.applicationDeadline ?? undefined,
     description: u.description ?? undefined,
+    descriptionRu: uExt.descriptionRu ?? undefined,
+    descriptionKz: uExt.descriptionKz ?? undefined,
     fitScore: u.fitScore,
     recommendationScore: u.recommendationScore,
     fitScoreBreakdown: u.fitScoreBreakdown
@@ -427,7 +433,18 @@ export default async function UniversityPage({ params }: UniversityPageProps) {
 
   if (!uniData) notFound();
   const { profile: university, scholarships, deadlines } = uniData!;
-  const profile = studentProfile ?? MOCK_SESSION_PROFILE;
+  // If user is logged in but has no DB profile yet, use an empty profile so
+  // GPA/IELTS defaults don't bleed into AI output. Fall back to mock only for
+  // unauthenticated (demo) visitors.
+  const EMPTY_PROFILE: typeof MOCK_SESSION_PROFILE = {
+    ...MOCK_SESSION_PROFILE,
+    gpa: 0,
+    gpaScale: 5,
+    ielts: { overall: 0, listening: 0, reading: 0, writing: 0, speaking: 0 },
+    sat: undefined,
+    documents: [],
+  };
+  const profile = studentProfile ?? (userId ? EMPTY_PROFILE : MOCK_SESSION_PROFILE);
   const docs = profile.documents;
 
   const rsDetail = computeRS(university, preferences, {
@@ -452,7 +469,7 @@ export default async function UniversityPage({ params }: UniversityPageProps) {
   const pendingCount = docs.filter((d) => d.status === "pending").length;
 
   return (
-    <main className="min-h-screen bg-gray-50 pb-28">
+    <main className="min-h-screen bg-gray-50 dark:bg-slate-950 pb-28">
       {/* ── Hero Slider ───────────────────────────────────────────── */}
       <HeroSlider university={university} />
 
@@ -464,7 +481,7 @@ export default async function UniversityPage({ params }: UniversityPageProps) {
           <div className="flex-1 min-w-0 space-y-6">
 
             {/* A — AI Fit card (ring + instant insights) */}
-            <section className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 md:p-8">
+            <section className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm p-6 md:p-8">
               <div className="flex flex-wrap sm:flex-nowrap items-start gap-6">
                 <div className="flex-shrink-0">
                   <AIFitRing score={rsScore} size={140} strokeWidth={12} />
@@ -473,7 +490,7 @@ export default async function UniversityPage({ params }: UniversityPageProps) {
                   <p className="text-xs uppercase tracking-wider text-blue-500 font-semibold mb-1">
                     AI Fit Analysis
                   </p>
-                  <h2 className="text-base font-bold text-gray-900 mb-4">
+                  <h2 className="text-base font-bold text-gray-900 dark:text-slate-100 mb-4">
                     How {university.name.split(" ")[0]} matches your profile
                   </h2>
                   <AIInsightsClient
@@ -492,12 +509,12 @@ export default async function UniversityPage({ params }: UniversityPageProps) {
             </section>
 
             {/* B — GPT Personalised Evaluation */}
-            <section className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 md:p-8">
+            <section className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm p-6 md:p-8">
               <div className="flex items-center gap-2 mb-5">
                 <span className="inline-flex items-center gap-1.5 text-blue-600 bg-blue-50 rounded-full px-3 py-1 text-xs font-bold border border-blue-100">
                   ✦ GPT AI
                 </span>
-                <h2 className="text-base font-bold text-gray-900">Personalised Evaluation</h2>
+                <h2 className="text-base font-bold text-gray-900 dark:text-slate-100">Personalised Evaluation</h2>
               </div>
               <React.Suspense fallback={<AIFitSkeleton />}>
                 <AIAdvisorSection

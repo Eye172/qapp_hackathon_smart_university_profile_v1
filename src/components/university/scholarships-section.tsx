@@ -61,7 +61,7 @@ export function ScholarshipsSection({
   if (!scholarships.length) return null;
 
   return (
-    <section className="bg-gradient-to-br from-blue-50/70 to-indigo-50/70 rounded-3xl border border-blue-100 shadow-sm p-6 md:p-8">
+    <section className="bg-gradient-to-br from-blue-50/70 to-indigo-50/70 dark:from-slate-900 dark:to-slate-900 rounded-3xl border border-blue-100 dark:border-blue-500/20 shadow-sm p-6 md:p-8">
       {/* Decorative wavy pattern */}
       <div className="relative">
         <svg
@@ -85,7 +85,7 @@ export function ScholarshipsSection({
         <p className="text-xs uppercase tracking-wider text-blue-500 font-semibold mb-0.5">
           Funding
         </p>
-        <h2 className="text-lg font-bold text-gray-900 mb-6">Available Scholarships</h2>
+        <h2 className="text-lg font-bold text-gray-900 dark:text-slate-100 mb-6">Available Scholarships</h2>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -100,13 +100,13 @@ export function ScholarshipsSection({
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.07, duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
               className={[
-                "bg-white/80 backdrop-blur-sm rounded-2xl border p-5 space-y-3 hover:shadow-md transition-all",
+                "bg-white/80 dark:bg-slate-950/55 backdrop-blur-sm rounded-2xl border p-5 space-y-3 hover:shadow-md transition-all",
                 styles.cardBorder,
               ].join(" ")}
             >
               {/* Header */}
               <div className="flex items-start justify-between gap-3">
-                <p className="text-sm font-bold text-gray-900 leading-snug">{s.name}</p>
+                <p className="text-sm font-bold text-gray-900 dark:text-slate-100 leading-snug">{s.name}</p>
                 <span
                   className={`flex-shrink-0 inline-flex items-center gap-1.5 text-[10px] font-bold rounded-full px-2.5 py-1 ${styles.badge}`}
                 >
@@ -117,7 +117,7 @@ export function ScholarshipsSection({
 
               {/* Description */}
               {s.description && (
-                <p className="text-xs text-gray-500 leading-relaxed line-clamp-2">
+                <p className="text-xs text-gray-500 dark:text-slate-300 leading-relaxed line-clamp-2">
                   {s.description}
                 </p>
               )}
@@ -152,7 +152,7 @@ export function ScholarshipsSection({
                   </span>
                 )}
                 {s.eligibility && (
-                  <span className="text-[10px] text-gray-500 bg-gray-50 rounded-full px-2.5 py-1 border border-gray-100">
+                  <span className="text-[10px] text-gray-500 dark:text-slate-300 bg-gray-50 dark:bg-slate-900 rounded-full px-2.5 py-1 border border-gray-100 dark:border-slate-700">
                     {s.eligibility}
                   </span>
                 )}

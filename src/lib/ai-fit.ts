@@ -4,6 +4,8 @@ import { MOCK_SESSION_PROFILE } from "@/store/useSessionStore";
 import { db } from "@/lib/db";
 import type { IStudentProfile, IUniversityProfile } from "@/lib/types";
 import type { UserPreferenceData } from "@/lib/preference-categories";
+import type { Language } from "@/store/useSettingsStore";
+import { getAILanguageInstruction } from "@/lib/i18n";
 
 /* ─── Public types ───────────────────────────────────────────────────────── */
 export interface AIFitResult {
@@ -14,11 +16,12 @@ export interface AIFitResult {
 }
 
 /* ─── Deterministic profile hash (cache key) ─────────────────────────────── */
-const PROMPT_VERSION = "v3"; // bump to invalidate cache when prompt changes
+const PROMPT_VERSION = "v4"; // bump to invalidate cache when prompt changes
 
 function hashProfile(
   profile: IStudentProfile,
   preferences?: UserPreferenceData[],
+  language?: Language,
 ): string {
   const key = JSON.stringify({
     _v: PROMPT_VERSION,
@@ -29,6 +32,7 @@ function hashProfile(
     interests: profile.interests,
     budget: profile.budgetUsdPerYear,
     studyLevel: profile.preferredStudyLevel,
+    language,
     prefs: preferences?.map((p) => ({
       key: p.categoryKey,
       pri: p.priority,
@@ -202,8 +206,10 @@ export async function fetchAIFit(
   university: IUniversityProfile,
   studentProfile: IStudentProfile = MOCK_SESSION_PROFILE,
   preferences?: UserPreferenceData[],
+  language: Language = "en",
 ): Promise<AIFitResult> {
-  const profileHash = hashProfile(studentProfile, preferences);
+  const profileHash = hashProfile(studentProfile, preferences, language);
+  const apiKey = process.env.OPENAI_API_KEY;
 
   // Check DB cache
   const cached = await db.aIFitEvaluation
@@ -214,7 +220,7 @@ export async function fetchAIFit(
     })
     .catch(() => null);
 
-  if (cached) {
+  if (cached && (cached.source === "openai" || !apiKey)) {
     return {
       score:   cached.score,
       reasons: cached.reasons,
@@ -225,7 +231,6 @@ export async function fetchAIFit(
 
   // Compute
   let result: AIFitResult;
-  const apiKey = process.env.OPENAI_API_KEY;
   const modelId = process.env.OPENAI_MODEL ?? "gpt-4o-mini";
 
   if (!apiKey) {
@@ -234,9 +239,10 @@ export async function fetchAIFit(
   } else {
     try {
       const preferenceContext = preferences ? buildPreferenceContext(preferences) : "";
+      const langInstruction = `\n\nIMPORTANT: ${getAILanguageInstruction(language)}`;
       const llmResult = await generateText({
         model: openai(modelId),
-        system: SYSTEM_PROMPT + preferenceContext,
+        system: SYSTEM_PROMPT + preferenceContext + langInstruction,
         prompt: JSON.stringify({ studentProfile, university }),
         temperature: 0.15,
       });
@@ -246,7 +252,8 @@ export async function fetchAIFit(
         ? { ...parsed, source: "openai" }
         : buildMockFit(university, studentProfile, preferences);
     } catch (err) {
-      console.error("[AI Fit] OpenAI error:", err);
+      const message = err instanceof Error ? err.message : String(err);
+      console.warn("[AI Fit] OpenAI unavailable, using demo fallback:", message);
       result = buildMockFit(university, studentProfile, preferences);
     }
   }

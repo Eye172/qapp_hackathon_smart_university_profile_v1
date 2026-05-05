@@ -18,6 +18,9 @@
 # production
 /build
 
+# user-uploaded documents (stored locally in dev, never commit)
+/public/uploads/
+
 # misc
 .DS_Store
 *.pem
@@ -34,6 +37,7 @@ yarn-error.log*
 
 # claude code (local machine paths / permissions)
 .claude/settings.local.json
+.claude/worktrees/
 
 # sqlite databases (never commit — contains real data)
 *.db

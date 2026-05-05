@@ -9,6 +9,7 @@ import {
   type PreferenceCategoryConfig,
   type UserPreferenceData,
 } from "@/lib/preference-categories";
+import { useTranslation } from "@/lib/i18n";
 
 interface StepTagsProps {
   preferences: UserPreferenceData[];
@@ -213,6 +214,7 @@ export function StepTags({
   const [loadingDel, setLoadingDel] = useState<Record<string, string | null>>({});
 
   const filledCount = preferences.filter((p) => p.values.length > 0).length;
+  const t = useTranslation();
 
   async function handleToggleChip(key: string, option: string, alreadySelected: { id: string; value: string } | undefined) {
     if (alreadySelected) {
@@ -248,8 +250,8 @@ export function StepTags({
     >
       {/* Hint bar */}
       <div className="flex items-center justify-between text-[11px] text-[color:var(--color-muted)]/70">
-        <span>Select what matters to you</span>
-        <span>{filledCount}/{PREFERENCE_CATEGORIES.length} filled</span>
+        <span>{t.registration.selectWhatMatters}</span>
+        <span>{filledCount}/{PREFERENCE_CATEGORIES.length} {t.registration.filled}</span>
       </div>
 
       {/* Category rows */}

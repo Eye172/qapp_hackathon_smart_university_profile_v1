@@ -77,7 +77,7 @@ model StudentProfile {
   nationality    String  @default("Kazakhstan")
   currentCountry String  @default("Kazakhstan")
   gradeLevel     Int     @default(11)
-  gpa            Float   @default(4.7)
+  gpa            Float   @default(0)
   gpaScale       Float   @default(5.0)
   avatarUrl      String?
 
@@ -125,7 +125,10 @@ model StudentDocument {
 model University {
   id           String  @id
   name         String
-  nameRu       String? // Russian/local name
+  nameRu       String? // Russian name
+  nameKz        String? // Kazakh name
+  descriptionRu String? // Russian description
+  descriptionKz String? // Kazakh description
   country      String
   city         String
   founded      Int?    // founding year
