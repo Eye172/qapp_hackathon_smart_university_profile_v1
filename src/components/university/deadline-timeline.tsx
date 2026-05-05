@@ -34,11 +34,11 @@ export function DeadlineTimeline({ milestones }: DeadlineTimelineProps) {
   if (!milestones.length) return null;
 
   return (
-    <section className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 md:p-8">
+    <section className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm p-6 md:p-8">
       <p className="text-xs uppercase tracking-wider text-amber-500 font-semibold mb-0.5">
         Timeline
       </p>
-      <h2 className="text-lg font-bold text-gray-900 mb-7">Key Deadlines</h2>
+      <h2 className="text-lg font-bold text-gray-900 dark:text-slate-100 mb-7">Key Deadlines</h2>
 
       <ol className="relative">
         {/* Vertical connector line */}
@@ -56,7 +56,7 @@ export function DeadlineTimeline({ milestones }: DeadlineTimelineProps) {
             ? "bg-red-500 border-red-500 text-white"
             : isSoon
             ? "bg-amber-400 border-amber-400 text-white"
-            : "bg-white border-gray-300 text-gray-400";
+            : "bg-white dark:bg-slate-950 border-gray-300 dark:border-slate-700 text-gray-400";
 
           const countdownStyle = isCritical || isToday
             ? "bg-red-100 text-red-700"
@@ -89,7 +89,7 @@ export function DeadlineTimeline({ milestones }: DeadlineTimelineProps) {
                   <div className="min-w-0">
                     <p
                       className={`text-sm font-semibold leading-snug ${
-                        m.isPast ? "text-gray-400 line-through" : "text-gray-900"
+                        m.isPast ? "text-gray-400 line-through" : "text-gray-900 dark:text-slate-100"
                       }`}
                     >
                       {m.label}

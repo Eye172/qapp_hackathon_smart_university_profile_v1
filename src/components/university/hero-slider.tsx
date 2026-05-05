@@ -4,6 +4,8 @@ import * as React from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import type { IUniversityProfile } from "@/lib/types";
+import { useSettingsStore } from "@/store/useSettingsStore";
+import { localizeUniversity } from "@/lib/i18n";
 
 const FALLBACK =
   "https://images.unsplash.com/photo-1607237138185-eedd9c632b0b?auto=format&fit=crop&w=1800&q=80";
@@ -13,6 +15,8 @@ interface HeroSliderProps {
 }
 
 export function HeroSlider({ university }: HeroSliderProps) {
+  const lang = useSettingsStore((s) => s.language);
+  const { name: localName } = localizeUniversity(university, lang);
   const photos: string[] = (() => {
     const arr = university.photos ?? [];
     if (arr.length > 0) return arr;
@@ -124,10 +128,10 @@ export function HeroSlider({ university }: HeroSliderProps) {
           )}
 
           <h1 className="font-display text-white text-4xl md:text-5xl xl:text-6xl leading-tight font-semibold mb-1 drop-shadow-lg">
-            {university.name}
+            {localName}
           </h1>
 
-          {university.nameRu && (
+          {lang === "en" && university.nameRu && (
             <p className="text-white/68 text-base md:text-lg mb-3 font-light tracking-wide">
               {university.nameRu}
             </p>

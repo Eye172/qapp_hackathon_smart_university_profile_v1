@@ -87,7 +87,7 @@ export function AIChatSheet({ trigger, defaultOpen = false }: AIChatSheetProps) 
                 QApp Advisor
               </Dialog.Title>
               <p className="text-[length:var(--text-fluid-xs)] text-[color:var(--color-muted)]">
-                Multilingual study-abroad mentor · streams from Claude
+                Multilingual study-abroad mentor · streams from GPT-4o
               </p>
             </div>
             <Dialog.Close asChild>
@@ -167,7 +167,7 @@ export function AIChatSheet({ trigger, defaultOpen = false }: AIChatSheetProps) 
               <div className="rounded-2xl border border-[#9E6464]/40 bg-[#9E6464]/8 p-3 text-[length:var(--text-fluid-xs)] text-[#6E3D3D]">
                 {error.message}
                 <p className="mt-1 opacity-70">
-                  Most likely: missing ANTHROPIC_API_KEY in .env.local.
+                  Most likely: missing OPENAI_API_KEY in .env.local.
                 </p>
               </div>
             ) : null}

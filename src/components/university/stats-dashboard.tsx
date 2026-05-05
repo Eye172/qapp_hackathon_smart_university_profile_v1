@@ -2,44 +2,89 @@
 
 import * as React from "react";
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-  RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  Radar,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, Radar,
 } from "recharts";
 import type { IUniversityProfile } from "@/lib/types";
 
-/* ── colour palette ──────────────────────────────────────────────────────── */
-const BAR_PALETTE = [
-  "#6366f1", "#3b82f6", "#0ea5e9", "#10b981",
-  "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899",
-];
-const MAJOR_PALETTE = [
-  "#6366f1", "#8b5cf6", "#3b82f6", "#0ea5e9",
-  "#10b981", "#f59e0b",
-];
+/* ── Design tokens (2-accent system: indigo + teal only) ─────────────────── */
+const INDIGO = "#4f46e5";
+const TEAL   = "#0d9488";
 
-function metColor(student: number, min: number) {
-  if (min <= 0) return "#3b82f6";
-  return student >= min ? "#10b981" : "#ef4444";
+/* ── Glass Tooltip (eliminates Recharts formatter TS errors) ─────────────── */
+interface TooltipPayload { name?: string; value?: number | string; fill?: string }
+function GlassTooltip({ active, payload, label }: { active?: boolean; payload?: TooltipPayload[]; label?: string }) {
+  if (!active || !payload?.length) return null;
+  return (
+    <div style={{
+      background: "rgba(255,255,255,0.88)",
+      backdropFilter: "blur(14px)",
+      WebkitBackdropFilter: "blur(14px)",
+      border: "1px solid rgba(79,70,229,0.14)",
+      borderRadius: 14,
+      boxShadow: "0 8px 32px rgba(15,23,42,0.12)",
+      padding: "10px 16px",
+      fontSize: 12,
+    }}>
+      {label && <p style={{ fontWeight: 700, color: "#0f172a", marginBottom: 5, fontSize: 11 }}>{label}</p>}
+      {payload.map((p, i) => (
+        <p key={i} style={{ color: INDIGO, fontWeight: 600 }}>
+          {p.name}: <span style={{ fontVariantNumeric: "tabular-nums" }}>{p.value}{typeof p.value === "number" && p.name?.includes("%") ? "%" : ""}</span>
+        </p>
+      ))}
+    </div>
+  );
 }
 
-const TOOLTIP_STYLE: React.CSSProperties = {
-  background: "rgba(255,255,255,0.97)",
-  border: "1px solid rgba(99,102,241,0.12)",
-  borderRadius: "14px",
-  boxShadow: "0 8px 32px rgba(15,23,42,0.12)",
-  fontSize: 12,
-  padding: "10px 14px",
-};
+/* ── Animated count-up ───────────────────────────────────────────────────── */
+function useCountUp(target: number, duration = 1200) {
+  const [val, setVal] = React.useState(0);
+  React.useEffect(() => {
+    if (!target) { setVal(0); return; }
+    let frame = 0;
+    const frames = Math.round(duration / 16);
+    const id = setInterval(() => {
+      frame++;
+      const progress = frame / frames;
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setVal(Math.round(target * eased * 10) / 10);
+      if (frame >= frames) { setVal(target); clearInterval(id); }
+    }, 16);
+    return () => clearInterval(id);
+  }, [target, duration]);
+  return val;
+}
+
+/* ── Metric Card ─────────────────────────────────────────────────────────── */
+function MetricCard({ label, value, suffix = "" }: { label: string; value: number; suffix?: string }) {
+  const count = useCountUp(value);
+  return (
+    <div className="relative overflow-hidden rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-950/55 p-4 group hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-default">
+      <div className="pointer-events-none absolute inset-0 opacity-[0.025]" style={{
+        backgroundImage: `radial-gradient(circle, ${INDIGO} 1px, transparent 1px)`,
+        backgroundSize: "16px 16px",
+      }}/>
+      <p className="font-mono text-2xl font-black text-slate-900 dark:text-slate-100 leading-none tabular-nums tracking-tight">
+        {count}{suffix}
+      </p>
+      <p className="mt-1.5 text-[9px] font-bold uppercase tracking-widest text-slate-400">{label}</p>
+    </div>
+  );
+}
+
+/* ── Section label ───────────────────────────────────────────────────────── */
+function SL({ children }: { children: React.ReactNode }) {
+  return <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 mb-3">{children}</p>;
+}
+
+/* ── Card wrapper ────────────────────────────────────────────────────────── */
+function Card({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <div className={`bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm hover:shadow-md transition-shadow duration-200 ${className}`}>
+      {children}
+    </div>
+  );
+}
 
 interface StatsDashboardProps {
   university: IUniversityProfile;
@@ -48,285 +93,227 @@ interface StatsDashboardProps {
   studentSat?: number;
 }
 
-export function StatsDashboard({
-  university,
-  studentIelts,
-  studentGpa,
-  studentSat,
-}: StatsDashboardProps) {
-  const hasTopMajors =
-    university.statsTopMajors && university.statsTopMajors.length > 0;
-  const hasDemographics =
-    university.statsDemographics &&
-    (university.statsDemographics.enrollment || university.statsDemographics.gender);
-  const hasFinancials =
-    university.statsFinancials &&
-    (university.statsFinancials.tuition_intl_usd || university.statsFinancials.tuition_domestic_usd);
+export function StatsDashboard({ university, studentIelts, studentGpa, studentSat }: StatsDashboardProps) {
+  const majors       = university.statsTopMajors?.slice(0, 6) ?? [];
+  const hasFinancials = !!(university.statsFinancials?.tuition_intl_usd ?? university.statsFinancials?.tuition_domestic_usd);
+  const diversity     = university.statsDemographics?.diversity;
+  const hasDiversity  = diversity && Object.keys(diversity).length > 1;
 
-  /* score comparison data */
   const scoreData = [
-    {
-      name: "IELTS",
-      Your: studentIelts,
-      Required: university.minIelts ?? 0,
-      fill: metColor(studentIelts, university.minIelts ?? 0),
-    },
-    {
-      name: "GPA",
-      Your: studentGpa,
-      Required: university.minGpa ?? 0,
-      fill: metColor(studentGpa, university.minGpa ?? 0),
-    },
-    ...(studentSat && university.minSat
-      ? [
-          {
-            name: "SAT /160",
-            Your: Math.round(studentSat / 160),
-            Required: Math.round(university.minSat / 160),
-            fill: metColor(studentSat, university.minSat),
-          },
-        ]
-      : []),
+    { name: "IELTS", You: studentIelts, Required: university.minIelts ?? 0 },
+    { name: "GPA",   You: studentGpa,   Required: university.minGpa   ?? 0 },
+    ...(studentSat && university.minSat ? [{ name: "SAT /160", You: Math.round(studentSat / 160), Required: Math.round(university.minSat / 160) }] : []),
   ];
 
-  /* acceptance / employment radar */
   const radarData = [
-    { subject: "Acceptance\nRate", A: university.acceptanceRate ?? 0 },
-    { subject: "Employment\n6mo", A: university.employmentRate6mo ?? 0 },
-    { subject: "Student/\nFaculty", A: Math.min(100, (university.studentFacultyRatio ?? 0) * 4) },
-    { subject: "Int'l\nStudents", A: university.statsDemographics?.intl_student_pct ?? 0 },
-    { subject: "First Gen\n%", A: university.statsDemographics?.first_gen_pct ?? 0 },
+    { s: "Acceptance",  A: university.acceptanceRate    ?? 0 },
+    { s: "Employment",  A: university.employmentRate6mo ?? 0 },
+    { s: "S:F Ratio",   A: Math.min(100, (university.studentFacultyRatio ?? 0) * 4) },
+    { s: "Intl %",      A: university.statsDemographics?.intl_student_pct ?? 0 },
+    { s: "First Gen",   A: university.statsDemographics?.first_gen_pct    ?? 0 },
   ].filter((d) => d.A > 0);
 
+  const metrics = [
+    { label: "Acceptance",   value: university.acceptanceRate       ?? 0, suffix: "%" },
+    { label: "Employment",   value: university.employmentRate6mo    ?? 0, suffix: "%" },
+    { label: "S:F Ratio",    value: university.studentFacultyRatio  ?? 0, suffix: ":1" },
+    { label: "Avg Salary",   value: university.avgStartingSalaryUsd ? Math.round(university.avgStartingSalaryUsd / 1000) : 0, suffix: "k$" },
+  ].filter((m) => m.value > 0);
+
+  const AXIS_TICK = { fill: "#94a3b8", fontSize: 10 };
+  const LABEL_TICK = { fill: "#64748b", fontSize: 11, fontWeight: 600 as const };
+  const GRID_STROKE = "rgba(79,70,229,0.06)";
+
   return (
-    <section className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-      {/* header */}
-      <div className="px-6 md:px-8 pt-6 pb-4 border-b border-gray-100 flex items-center gap-3">
-        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shrink-0">
-          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 16 16">
+    <section className="space-y-3">
+      {/* ── Section header */}
+      <div className="flex items-center gap-2.5 px-1">
+        <div className="w-7 h-7 rounded-xl bg-indigo-600 flex items-center justify-center shrink-0">
+          <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 16 16">
             <rect x="2" y="8" width="3" height="6" rx="1" fill="currentColor"/>
             <rect x="6.5" y="5" width="3" height="9" rx="1" fill="currentColor"/>
             <rect x="11" y="2" width="3" height="12" rx="1" fill="currentColor"/>
           </svg>
         </div>
         <div>
-          <p className="text-[10px] uppercase tracking-wider text-violet-500 font-bold">Analytics</p>
-          <h2 className="text-lg font-bold text-gray-900 leading-tight">University Statistics</h2>
+          <p className="text-[9px] font-bold uppercase tracking-widest text-indigo-500">Analytics</p>
+          <h2 className="text-base font-bold text-slate-900 leading-none">University Statistics</h2>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-px bg-gray-100/80">
+      {/* ── Bento grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
 
-        {/* ── 1. Score Comparison ──────────────────────────────────── */}
-        <div className="bg-white p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-bold text-gray-700">Your Scores vs Requirements</p>
-            <div className="flex items-center gap-3 text-[10px] text-gray-400">
-              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-gradient-to-r from-emerald-400 to-blue-500 inline-block"/>You</span>
-              <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-sm bg-slate-200 inline-block"/>Min</span>
-            </div>
+        {/* 1 ── Score comparison */}
+        <Card>
+          <SL>Your Scores vs Requirements</SL>
+          <div className="flex gap-4 text-[9px] text-slate-400 mb-4">
+            <span className="flex items-center gap-1.5"><span className="inline-block w-2.5 h-2.5 rounded-sm bg-indigo-500"/>You</span>
+            <span className="flex items-center gap-1.5"><span className="inline-block w-2.5 h-2.5 rounded-sm bg-slate-200"/>Min req.</span>
           </div>
-          <ResponsiveContainer width="100%" height={240}>
-            <BarChart data={scoreData} barCategoryGap="28%" barGap={4}>
+          <ResponsiveContainer width="100%" height={216}>
+            <BarChart data={scoreData} barCategoryGap="30%" barGap={4}>
               <defs>
-                {scoreData.map((entry, i) => (
-                  <linearGradient key={`sg-${i}`} id={`scoreGrad${i}`} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={entry.fill} stopOpacity={0.95}/>
-                    <stop offset="100%" stopColor={entry.fill} stopOpacity={0.6}/>
-                  </linearGradient>
-                ))}
+                <linearGradient id="sd-you" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={INDIGO} stopOpacity={1}/>
+                  <stop offset="100%" stopColor={INDIGO} stopOpacity={0.5}/>
+                </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="4 4" stroke="rgba(99,102,241,0.06)" vertical={false}/>
-              <XAxis dataKey="name" tick={{ fill: "#64748b", fontSize: 11, fontWeight: 600 }} axisLine={false} tickLine={false}/>
-              <YAxis domain={[0, 10]} tick={{ fill: "#94a3b8", fontSize: 10 }} axisLine={false} tickLine={false} width={20}/>
-              <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ fill: "rgba(99,102,241,0.04)", radius: 8 }}/>
-              <Bar dataKey="Your" radius={[8, 8, 0, 0]} maxBarSize={48} name="Your score">
-                {scoreData.map((entry, i) => (
-                  <Cell key={`sc-${i}`} fill={`url(#scoreGrad${i})`}/>
-                ))}
-              </Bar>
-              <Bar dataKey="Required" fill="#e2e8f0" radius={[8, 8, 0, 0]} maxBarSize={48} name="Min required"/>
+              <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} vertical={false}/>
+              <XAxis dataKey="name" tick={LABEL_TICK} axisLine={false} tickLine={false}/>
+              <YAxis tick={AXIS_TICK} axisLine={false} tickLine={false} width={22}/>
+              <Tooltip content={<GlassTooltip/>} cursor={{ fill: "rgba(79,70,229,0.04)" }}/>
+              <Bar dataKey="You"      fill="url(#sd-you)" radius={[10,10,0,0]} maxBarSize={44} name="You"/>
+              <Bar dataKey="Required" fill="#e2e8f0"       radius={[10,10,0,0]} maxBarSize={44} name="Min req."/>
             </BarChart>
           </ResponsiveContainer>
-        </div>
+        </Card>
 
-        {/* ── 2. Top Fields of Study ───────────────────────────────── */}
-        {hasTopMajors ? (
-          <div className="bg-white p-6 space-y-4">
-            <p className="text-xs font-bold text-gray-700">Top Fields of Study</p>
-            <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={university.statsTopMajors!.slice(0, 6)} layout="vertical" barCategoryGap="18%">
+        {/* 2 ── Top fields or about */}
+        {majors.length > 0 ? (
+          <Card>
+            <SL>Top Fields of Study</SL>
+            <ResponsiveContainer width="100%" height={216}>
+              <BarChart data={majors} layout="vertical" barCategoryGap="22%">
                 <defs>
-                  {university.statsTopMajors!.slice(0, 6).map((_, i) => (
-                    <linearGradient key={`mg-${i}`} id={`majorGrad${i}`} x1="0" y1="0" x2="1" y2="0">
-                      <stop offset="0%" stopColor={MAJOR_PALETTE[i % MAJOR_PALETTE.length]} stopOpacity={1}/>
-                      <stop offset="100%" stopColor={MAJOR_PALETTE[(i + 2) % MAJOR_PALETTE.length]} stopOpacity={0.7}/>
-                    </linearGradient>
-                  ))}
+                  <linearGradient id="sd-major" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%"   stopColor={INDIGO} stopOpacity={1}/>
+                    <stop offset="100%" stopColor={TEAL}   stopOpacity={0.85}/>
+                  </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="4 4" stroke="rgba(99,102,241,0.06)" vertical={true} horizontal={false}/>
-                <XAxis type="number" tick={{ fill: "#94a3b8", fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`}/>
-                <YAxis type="category" dataKey="name" tick={{ fill: "#475569", fontSize: 10, fontWeight: 500 }} axisLine={false} tickLine={false} width={90}/>
-                <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ fill: "rgba(99,102,241,0.04)" }} formatter={(v: number) => [`${v}%`, "Students"]}/>
-                <Bar dataKey="percent" radius={[0, 8, 8, 0]} maxBarSize={22}>
-                  {university.statsTopMajors!.slice(0, 6).map((_, i) => (
-                    <Cell key={`mj-${i}`} fill={`url(#majorGrad${i})`}/>
-                  ))}
-                </Bar>
+                <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} horizontal={false}/>
+                <XAxis type="number" tick={AXIS_TICK} axisLine={false} tickLine={false} tickFormatter={(v) => `${v}%`}/>
+                <YAxis type="category" dataKey="name" tick={{ fill: "#475569", fontSize: 10, fontWeight: 500 }} axisLine={false} tickLine={false} width={88}/>
+                <Tooltip content={<GlassTooltip/>} cursor={{ fill: "rgba(79,70,229,0.04)" }}/>
+                <Bar dataKey="percent" fill="url(#sd-major)" radius={[0,10,10,0]} maxBarSize={20} name="Students %"/>
               </BarChart>
             </ResponsiveContainer>
-          </div>
+          </Card>
         ) : university.description ? (
-          <div className="bg-white p-6 space-y-3">
-            <p className="text-xs font-bold text-gray-700">About This University</p>
-            <p className="text-xs text-gray-500 leading-relaxed line-clamp-[9]">{university.description}</p>
-          </div>
+          <Card>
+            <SL>About</SL>
+            <p className="text-xs text-slate-500 leading-relaxed line-clamp-[10]">{university.description}</p>
+          </Card>
         ) : null}
 
-        {/* ── 3. Quick Stats + Demographics ───────────────────────── */}
-        <div className="bg-white p-6 space-y-5">
-
-          {/* Stat pills */}
-          <div className="grid grid-cols-2 gap-2">
-            {[
-              { label: "Acceptance Rate", value: university.acceptanceRate ? `${university.acceptanceRate}%` : null, color: "from-blue-500 to-indigo-500" },
-              { label: "Employment 6mo", value: university.employmentRate6mo ? `${university.employmentRate6mo}%` : null, color: "from-emerald-500 to-teal-500" },
-              { label: "Student:Faculty", value: university.studentFacultyRatio ? `${university.studentFacultyRatio}:1` : null, color: "from-violet-500 to-purple-500" },
-              { label: "Avg Salary", value: university.avgStartingSalaryUsd ? `$${Math.round(university.avgStartingSalaryUsd / 1000)}k` : null, color: "from-amber-500 to-orange-500" },
-            ].filter((s) => s.value).map((s) => (
-              <div key={s.label} className="rounded-2xl overflow-hidden border border-gray-100 shadow-sm">
-                <div className={`h-1 w-full bg-gradient-to-r ${s.color}`}/>
-                <div className="px-3 py-2.5">
-                  <p className="text-base font-extrabold text-gray-900 leading-none">{s.value}</p>
-                  <p className="text-[9px] text-gray-400 font-medium mt-0.5 uppercase tracking-wide">{s.label}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Gender breakdown */}
-          {university.statsDemographics?.gender && (
-            <div className="space-y-2">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Gender Split</p>
-              <div className="h-5 rounded-full overflow-hidden flex">
-                <div
-                  style={{ width: `${university.statsDemographics.gender.female}%` }}
-                  className="bg-gradient-to-r from-pink-400 to-rose-500 transition-all"
-                />
-                <div className="flex-1 bg-gradient-to-r from-sky-400 to-blue-500"/>
-              </div>
-              <div className="flex justify-between text-[10px] text-gray-500">
-                <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-pink-400 inline-block"/>Female {university.statsDemographics.gender.female}%</span>
-                <span className="flex items-center gap-1">Male {university.statsDemographics.gender.male}%<span className="w-2 h-2 rounded-full bg-sky-400 inline-block"/></span>
-              </div>
+        {/* 3 ── Animated metric cards */}
+        {metrics.length > 0 && (
+          <Card>
+            <SL>Key Metrics</SL>
+            <div className="grid grid-cols-2 gap-3">
+              {metrics.map((m) => <MetricCard key={m.label} {...m}/>)}
             </div>
-          )}
-
-          {/* Enrollment */}
-          {university.statsDemographics?.enrollment && (
-            <div className="rounded-2xl bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100 px-4 py-3 flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0">
-                <svg className="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 20 20">
-                  <circle cx="10" cy="7" r="3" stroke="currentColor" strokeWidth="1.5"/>
-                  <path d="M3 17c0-3.3 3.1-6 7-6s7 2.7 7 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
-              </div>
-              <div>
-                <p className="text-lg font-extrabold text-indigo-700">
-                  {university.statsDemographics.enrollment.toLocaleString()}
-                </p>
-                <p className="text-[10px] text-indigo-500 font-semibold uppercase tracking-wide">Total Enrollment</p>
-              </div>
-            </div>
-          )}
-
-          {/* Financials */}
-          {hasFinancials && (
-            <div className="space-y-1.5">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Tuition</p>
-              {university.statsFinancials!.tuition_intl_usd && (
-                <div className="flex items-center justify-between rounded-xl bg-gray-50 px-3 py-2 border border-gray-100">
-                  <span className="text-xs text-gray-500">International</span>
-                  <span className="text-xs font-bold text-gray-800">${university.statsFinancials!.tuition_intl_usd.toLocaleString()}/yr</span>
-                </div>
-              )}
-              {university.statsFinancials!.tuition_domestic_usd && (
-                <div className="flex items-center justify-between rounded-xl bg-gray-50 px-3 py-2 border border-gray-100">
-                  <span className="text-xs text-gray-500">Domestic</span>
-                  <span className="text-xs font-bold text-gray-800">${university.statsFinancials!.tuition_domestic_usd.toLocaleString()}/yr</span>
-                </div>
-              )}
-              {university.statsFinancials!.avg_after_aid_usd && (
-                <div className="flex items-center justify-between rounded-xl bg-emerald-50 px-3 py-2 border border-emerald-100">
-                  <span className="text-xs text-emerald-600">After Aid</span>
-                  <span className="text-xs font-bold text-emerald-700">${university.statsFinancials!.avg_after_aid_usd.toLocaleString()}/yr</span>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Quick facts fallback */}
-          {!hasDemographics && !hasFinancials && (
-            <div className="space-y-2">
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Quick Facts</p>
-              {[
-                { label: "Min. GPA", value: university.minGpa },
-                { label: "Min. IELTS", value: university.minIelts },
-                { label: "Min. SAT", value: university.minSat },
-                { label: "Languages", value: university.languages },
-              ].filter((r) => r.value).map((r) => (
-                <div key={r.label} className="flex items-center justify-between text-xs">
-                  <span className="text-gray-500">{r.label}</span>
-                  <span className="font-bold text-gray-800">{String(r.value)}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* ── 4. Bar chart for diversity breakdown (if data) ────────── */}
-        {university.statsDemographics?.diversity && Object.keys(university.statsDemographics.diversity).length > 1 && (
-          <div className="bg-white p-6 space-y-4 md:col-span-2 xl:col-span-1">
-            <p className="text-xs font-bold text-gray-700">Student Diversity</p>
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart
-                data={Object.entries(university.statsDemographics.diversity).map(([k, v]) => ({ name: k, pct: Number(v) }))}
-                barCategoryGap="30%"
-              >
-                <defs>
-                  {Object.keys(university.statsDemographics.diversity).map((_, i) => (
-                    <linearGradient key={`dg-${i}`} id={`divGrad${i}`} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor={BAR_PALETTE[i % BAR_PALETTE.length]} stopOpacity={0.9}/>
-                      <stop offset="100%" stopColor={BAR_PALETTE[i % BAR_PALETTE.length]} stopOpacity={0.5}/>
-                    </linearGradient>
-                  ))}
-                </defs>
-                <CartesianGrid strokeDasharray="4 4" stroke="rgba(99,102,241,0.06)" vertical={false}/>
-                <XAxis dataKey="name" tick={{ fill: "#64748b", fontSize: 10 }} axisLine={false} tickLine={false}/>
-                <YAxis tick={{ fill: "#94a3b8", fontSize: 10 }} axisLine={false} tickLine={false} width={28} tickFormatter={(v) => `${v}%`}/>
-                <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ fill: "rgba(99,102,241,0.04)" }} formatter={(v: number) => [`${v}%`, "Students"]}/>
-                <Bar dataKey="pct" radius={[8, 8, 0, 0]} maxBarSize={52}>
-                  {Object.keys(university.statsDemographics.diversity).map((_, i) => (
-                    <Cell key={`div-${i}`} fill={`url(#divGrad${i})`}/>
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+          </Card>
         )}
 
-        {/* ── 5. Radar chart for key metrics (if enough data) ─────── */}
+        {/* 4 ── Gender + Enrollment + Financials */}
+        {(university.statsDemographics?.gender ?? hasFinancials ?? university.statsDemographics?.enrollment) && (
+          <Card className="space-y-5">
+            {university.statsDemographics?.gender && (
+              <div>
+                <SL>Gender Distribution</SL>
+                <div className="h-3 rounded-full overflow-hidden flex mb-2">
+                  <div style={{ width: `${university.statsDemographics.gender.female}%`, background: `linear-gradient(to right, #a78bfa, #818cf8)` }} className="rounded-l-full transition-all"/>
+                  <div className="flex-1 rounded-r-full" style={{ background: `linear-gradient(to right, ${TEAL}, #0f766e)` }}/>
+                </div>
+                <div className="flex justify-between text-[9px] text-slate-500 font-semibold">
+                  <span className="flex items-center gap-1.5"><span className="inline-block w-2 h-2 rounded-full bg-violet-400"/>Female {university.statsDemographics.gender.female}%</span>
+                  <span className="flex items-center gap-1.5">Male {university.statsDemographics.gender.male}%<span className="inline-block w-2 h-2 rounded-full bg-teal-500"/></span>
+                </div>
+              </div>
+            )}
+            {university.statsDemographics?.enrollment && (
+              <div className="flex items-center gap-3 rounded-2xl bg-indigo-50 border border-indigo-100 px-4 py-3">
+                <div className="w-8 h-8 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0">
+                  <svg className="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 20 20" stroke="currentColor" strokeWidth="1.5">
+                    <circle cx="10" cy="7" r="3"/><path d="M3 17c0-3.3 3.1-6 7-6s7 2.7 7 6" strokeLinecap="round"/>
+                  </svg>
+                </div>
+                <div>
+                  <p className="font-mono text-lg font-black text-indigo-700 tabular-nums">{university.statsDemographics.enrollment.toLocaleString()}</p>
+                  <p className="text-[9px] font-bold uppercase tracking-widest text-indigo-400">Enrolled</p>
+                </div>
+              </div>
+            )}
+            {hasFinancials && (
+              <div>
+                <SL>Tuition</SL>
+                <div className="divide-y divide-dashed divide-slate-100">
+                  {university.statsFinancials!.tuition_intl_usd && (
+                    <div className="flex justify-between py-2 text-xs"><span className="text-slate-500">International</span><span className="font-mono font-bold text-slate-800">${university.statsFinancials!.tuition_intl_usd.toLocaleString()}/yr</span></div>
+                  )}
+                  {university.statsFinancials!.tuition_domestic_usd && (
+                    <div className="flex justify-between py-2 text-xs"><span className="text-slate-500">Domestic</span><span className="font-mono font-bold text-slate-800">${university.statsFinancials!.tuition_domestic_usd.toLocaleString()}/yr</span></div>
+                  )}
+                  {university.statsFinancials!.avg_after_aid_usd && (
+                    <div className="flex justify-between py-2 text-xs"><span className="text-teal-600 font-semibold">After Aid ✦</span><span className="font-mono font-bold text-teal-700">${university.statsFinancials!.avg_after_aid_usd.toLocaleString()}/yr</span></div>
+                  )}
+                </div>
+              </div>
+            )}
+            {/* Quick facts fallback */}
+            {!university.statsDemographics?.gender && !hasFinancials && (
+              <div>
+                <SL>Requirements</SL>
+                <div className="divide-y divide-dashed divide-slate-100">
+                  {[{ l: "Min. GPA", v: university.minGpa }, { l: "Min. IELTS", v: university.minIelts }, { l: "Min. SAT", v: university.minSat }, { l: "Languages", v: university.languages }]
+                    .filter((r) => r.v)
+                    .map((r) => (
+                      <div key={r.l} className="flex justify-between py-2 text-xs">
+                        <span className="text-slate-500">{r.l}</span>
+                        <span className="font-mono font-bold text-slate-800">{String(r.v)}</span>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+          </Card>
+        )}
+
+        {/* 5 ── Radar with glow */}
         {radarData.length >= 3 && (
-          <div className="bg-white p-6 space-y-4">
-            <p className="text-xs font-bold text-gray-700">Key Performance Metrics</p>
-            <ResponsiveContainer width="100%" height={220}>
-              <RadarChart data={radarData} margin={{ top: 12, right: 24, bottom: 12, left: 24 }}>
-                <PolarGrid stroke="rgba(99,102,241,0.12)" strokeDasharray="4 4"/>
-                <PolarAngleAxis dataKey="subject" tick={{ fill: "#64748b", fontSize: 9, fontWeight: 600 }}/>
-                <Radar name="University" dataKey="A" stroke="#6366f1" fill="#6366f1" fillOpacity={0.18} strokeWidth={2}/>
+          <Card>
+            <SL>Performance Radar</SL>
+            <ResponsiveContainer width="100%" height={216}>
+              <RadarChart data={radarData} margin={{ top: 16, right: 28, bottom: 16, left: 28 }}>
+                <defs>
+                  <filter id="sd-glow" x="-50%" y="-50%" width="200%" height="200%">
+                    <feGaussianBlur stdDeviation="4" result="blur"/>
+                    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                  </filter>
+                </defs>
+                <PolarGrid stroke="rgba(79,70,229,0.1)" strokeDasharray="4 4"/>
+                <PolarAngleAxis dataKey="s" tick={{ fill: "#64748b", fontSize: 9, fontWeight: 600 }}/>
+                <Radar dataKey="A" stroke={INDIGO} fill={INDIGO} fillOpacity={0.15} strokeWidth={2.5}
+                  style={{ filter: "drop-shadow(0 0 6px rgba(79,70,229,0.5))" }}/>
               </RadarChart>
             </ResponsiveContainer>
-          </div>
+          </Card>
+        )}
+
+        {/* 6 ── Diversity breakdown */}
+        {hasDiversity && (
+          <Card className="md:col-span-2 xl:col-span-1">
+            <SL>Student Diversity</SL>
+            <ResponsiveContainer width="100%" height={200}>
+              <BarChart
+                data={Object.entries(diversity!).map(([k, v]) => ({ name: k, pct: Number(v) }))}
+                barCategoryGap="28%"
+              >
+                <defs>
+                  <linearGradient id="sd-div" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%"   stopColor={INDIGO} stopOpacity={0.9}/>
+                    <stop offset="100%" stopColor={TEAL}   stopOpacity={0.6}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} vertical={false}/>
+                <XAxis dataKey="name" tick={{ fill: "#64748b", fontSize: 9 }} axisLine={false} tickLine={false}/>
+                <YAxis tick={AXIS_TICK} axisLine={false} tickLine={false} width={28} tickFormatter={(v) => `${v}%`}/>
+                <Tooltip content={<GlassTooltip/>} cursor={{ fill: "rgba(79,70,229,0.04)" }}/>
+                <Bar dataKey="pct" fill="url(#sd-div)" radius={[10,10,0,0]} maxBarSize={48} name="Students %"/>
+              </BarChart>
+            </ResponsiveContainer>
+          </Card>
         )}
 
       </div>

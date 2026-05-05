@@ -16,17 +16,25 @@ import {
   User,
 } from "@/components/ui/icon";
 import { cn } from "@/lib/tailwind-utils";
+import { useSettingsStore, type Language } from "@/store/useSettingsStore";
+import { useTranslation } from "@/lib/i18n";
+
+const LANGS: { code: Language; label: string }[] = [
+  { code: "en", label: "EN" },
+  { code: "ru", label: "RU" },
+  { code: "kz", label: "KZ" },
+];
 
 const SPRING = { type: "spring" as const, stiffness: 380, damping: 30 };
 const LABEL_SPRING = { type: "spring" as const, stiffness: 420, damping: 32 };
 
 /* ─── Nav items ──────────────────────────────────────────────────────────── */
 const NAV_ITEMS = [
-  { href: "/feed",     label: "Discover",  icon: Compass,  matchPaths: ["/feed", "/university"] },
-  { href: "/search",   label: "Search",    icon: Search,   matchPaths: ["/search"] },
-  { href: "/timeline", label: "Deadlines", icon: Calendar, matchPaths: ["/timeline"] },
-  { href: "/profile",  label: "Profile",   icon: User,     matchPaths: ["/profile"] },
-];
+  { href: "/feed",     navKey: "feed",      icon: Compass,  matchPaths: ["/feed", "/university"] },
+  { href: "/search",   navKey: "search",    icon: Search,   matchPaths: ["/search"] },
+  { href: "/timeline", navKey: "deadlines", icon: Calendar, matchPaths: ["/timeline"] },
+  { href: "/profile",  navKey: "profile",   icon: User,     matchPaths: ["/profile"] },
+] as const;
 
 /* ─── Single nav row ──────────────────────────────────────────────────────── */
 function NavRow({
@@ -98,6 +106,8 @@ export function GlassSidebar({ expanded, onMouseEnter, onMouseLeave }: GlassSide
   const pathname = usePathname();
   const router = useRouter();
   const { status } = useSession();
+  const { language, theme, setLanguage, toggleTheme } = useSettingsStore();
+  const t = useTranslation();
 
   async function handleSignOut() {
     await signOut({ redirect: false });
@@ -114,10 +124,10 @@ export function GlassSidebar({ expanded, onMouseEnter, onMouseLeave }: GlassSide
       className="fixed left-0 top-0 bottom-0 flex flex-col py-5 overflow-hidden"
       style={{
         zIndex: "var(--z-sidebar)",
-        background: "rgba(255,255,255,0.82)",
+        background: "var(--color-surface-glass)",
         backdropFilter: "blur(20px) saturate(160%)",
-        borderRight: "1px solid rgba(37,99,235,0.08)",
-        boxShadow: "4px 0 24px -8px rgba(15,23,42,0.07)",
+        borderRight: "1px solid var(--color-border)",
+        boxShadow: "var(--shadow-sidebar)",
         willChange: "width",
       }}
       aria-label="Main navigation"
@@ -139,7 +149,7 @@ export function GlassSidebar({ expanded, onMouseEnter, onMouseLeave }: GlassSide
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -6 }}
               transition={LABEL_SPRING}
-              className="text-[15px] font-bold text-gray-900 whitespace-nowrap"
+              className="text-[15px] font-bold text-[color:var(--color-text)] whitespace-nowrap"
             >
               App
             </motion.span>
@@ -149,13 +159,13 @@ export function GlassSidebar({ expanded, onMouseEnter, onMouseLeave }: GlassSide
 
       {/* Primary nav */}
       <nav className="flex flex-col gap-1 px-3">
-        {NAV_ITEMS.map(({ href, label, icon, matchPaths }) => {
-          const active = matchPaths.some((p) => pathname?.startsWith(p));
+        {NAV_ITEMS.map(({ href, navKey, icon, matchPaths }) => {
+          const active = (matchPaths as readonly string[]).some((p) => pathname?.startsWith(p));
           return (
             <NavRow
               key={href}
               href={href}
-              label={label}
+              label={t.nav[navKey]}
               icon={icon}
               active={active}
               expanded={expanded}
@@ -205,13 +215,58 @@ export function GlassSidebar({ expanded, onMouseEnter, onMouseLeave }: GlassSide
 
       {/* Bottom controls */}
       <div className="flex flex-col gap-1 px-3">
+
+        {/* Lang + Theme — only when expanded */}
+        <AnimatePresence>
+          {expanded && (
+            <motion.div
+              key="lang-theme"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="overflow-hidden"
+            >
+              {/* Language chips */}
+              <div className="flex gap-1 px-1 mb-1">
+                {LANGS.map(({ code, label }) => (
+                  <button
+                    key={code}
+                    type="button"
+                    onClick={() => setLanguage(code)}
+                    className={cn(
+                      "flex-1 text-[10px] font-bold rounded-lg py-1.5 transition-all",
+                      language === code
+                        ? "bg-[color:var(--color-accent)] text-white"
+                        : "text-[color:var(--color-muted)] hover:text-[color:var(--color-accent)]",
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              {/* Theme toggle */}
+              <button
+                type="button"
+                onClick={toggleTheme}
+                className="flex items-center h-9 w-full rounded-xl px-3 gap-2 text-[color:var(--color-muted)] hover:bg-[color:var(--color-accent)]/10 hover:text-[color:var(--color-accent)] transition-colors duration-150 mb-1"
+              >
+                <span className="text-[15px]">{theme === "dark" ? "🌙" : "☀️"}</span>
+                <span className="text-[12px] font-medium whitespace-nowrap">
+                  {theme === "dark" ? t.settings.themeDark : t.settings.themeLight}
+                </span>
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Settings */}
         <Link
           href="/settings"
           className={cn(
             "flex items-center h-10 rounded-xl overflow-hidden",
-            "text-gray-500 hover:bg-white/70 hover:text-gray-900 transition-colors duration-150",
-            pathname?.startsWith("/settings") && "bg-blue-600 text-white",
+            "text-[color:var(--color-muted)] hover:bg-[color:var(--color-accent)]/10 hover:text-[color:var(--color-text)] transition-colors duration-150",
+            pathname?.startsWith("/settings") && "bg-[color:var(--color-accent)] text-white",
           )}
         >
           <span className="shrink-0 w-10 flex items-center justify-center">
@@ -227,7 +282,7 @@ export function GlassSidebar({ expanded, onMouseEnter, onMouseLeave }: GlassSide
                 transition={LABEL_SPRING}
                 className="text-[13px] font-medium whitespace-nowrap leading-none"
               >
-                Settings
+                {t.settings.title}
               </motion.span>
             )}
           </AnimatePresence>
@@ -238,7 +293,7 @@ export function GlassSidebar({ expanded, onMouseEnter, onMouseLeave }: GlassSide
           <button
             type="button"
             onClick={handleSignOut}
-            className="flex items-center h-10 w-full rounded-xl overflow-hidden text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors duration-150"
+            className="flex items-center h-10 w-full rounded-xl overflow-hidden text-[color:var(--color-muted)] hover:bg-red-50 hover:text-red-600 transition-colors duration-150"
           >
             <span className="shrink-0 w-10 flex items-center justify-center">
               <LogOut size={17} />
@@ -253,7 +308,7 @@ export function GlassSidebar({ expanded, onMouseEnter, onMouseLeave }: GlassSide
                   transition={LABEL_SPRING}
                   className="text-[13px] font-medium whitespace-nowrap leading-none"
                 >
-                  Sign out
+                  {t.settings.signOut}
                 </motion.span>
               )}
             </AnimatePresence>

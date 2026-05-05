@@ -107,66 +107,49 @@ export function ProgramsSection({
   if (!programs.length) return null;
 
   return (
-    <section className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
-      {/* Header */}
-      <div className="px-6 md:px-8 pt-6 md:pt-8 pb-5 border-b border-gray-100">
-        <div className="flex flex-wrap items-start justify-between gap-4 mb-5">
+    <section className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm overflow-hidden">
+
+      {/* ── Header + search */}
+      <div className="px-6 md:px-8 pt-7 pb-5 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
           <div>
-            <p className="text-xs uppercase tracking-wider text-blue-500 font-semibold mb-0.5">
-              Programs
-            </p>
-            <h2 className="text-lg font-bold text-gray-900">
-              {programs.length} programmes available
-            </h2>
+            <p className="text-[9px] font-bold uppercase tracking-widest text-indigo-500 mb-0.5">Programs</p>
+            <h2 className="text-base font-bold text-slate-900 dark:text-slate-100">{programs.length} programmes available</h2>
           </div>
-          {/* Search */}
           <div className="relative">
-            <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
-              fill="none"
-              viewBox="0 0 16 16"
-            >
-              <circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" strokeWidth="1.5" />
-              <path
-                d="M10.5 10.5L14 14"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 16 16">
+              <circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" strokeWidth="1.5"/>
+              <path d="M10.5 10.5L14 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
             <input
               type="text"
               placeholder="Search programs…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 pr-4 py-2 text-sm rounded-xl border border-gray-200 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 transition-all w-56"
+              className="pl-9 pr-4 py-2 text-sm rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-100 focus:border-indigo-400 transition-all w-52 placeholder:text-slate-400"
             />
           </div>
         </div>
 
-        {/* Filter chips row */}
-        <div className="flex flex-wrap gap-x-4 gap-y-2">
-          {(
-            [
-              { label: "Field", options: fields, value: fieldFilter, set: setFieldFilter },
-              { label: "Language", options: langs, value: langFilter, set: setLangFilter },
-              { label: "Level", options: levels, value: levelFilter, set: setLevelFilter },
-            ] as const
-          ).map((f) => (
-            <div key={f.label} className="flex items-center gap-1 flex-wrap">
-              <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mr-1">
-                {f.label}:
-              </span>
+        {/* ── Filter chip groups */}
+        <div className="flex flex-wrap gap-x-5 gap-y-2.5">
+          {([
+            { label: "Field",    options: fields, value: fieldFilter, set: setFieldFilter },
+            { label: "Language", options: langs,  value: langFilter,  set: setLangFilter  },
+            { label: "Level",    options: levels, value: levelFilter, set: setLevelFilter },
+          ] as const).map((f) => (
+            <div key={f.label} className="flex items-center gap-1.5 flex-wrap">
+              <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400 mr-0.5">{f.label}</span>
               {f.options.map((opt) => (
                 <button
                   key={opt}
                   type="button"
                   onClick={() => (f.set as React.Dispatch<React.SetStateAction<string>>)(opt)}
                   className={[
-                    "text-xs rounded-full px-3 py-1 border transition-all font-medium",
+                    "text-[11px] rounded-full px-2.5 py-1 border font-semibold transition-all active:scale-95",
                     f.value === opt
-                      ? "bg-blue-600 text-white border-blue-600 shadow-sm"
-                      : "bg-gray-50 text-gray-600 border-gray-200 hover:border-blue-300 hover:text-blue-600",
+                      ? "bg-indigo-600 text-white border-indigo-600 shadow-sm shadow-indigo-200"
+                      : "bg-white dark:bg-slate-950 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-indigo-300 hover:text-indigo-700",
                   ].join(" ")}
                 >
                   {opt}
@@ -177,110 +160,88 @@ export function ProgramsSection({
         </div>
       </div>
 
-      {/* Program list */}
-      <ul className="divide-y divide-gray-50/80">
+      {/* ── Program rows */}
+      <ul className="divide-y divide-slate-50">
         <AnimatePresence initial={false}>
           {visible.map((p, i) => {
             const s = fitStyle(p.fitScore);
+            const R = 18; const C = 2 * Math.PI * R;
+            const dash = (p.fitScore / 100) * C;
             return (
               <motion.li
                 key={p.id}
                 layout
-                initial={{ opacity: 0, y: 8 }}
+                initial={{ opacity: 0, y: 6 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                transition={{ delay: i * 0.04, duration: 0.3 }}
-                className="flex items-center gap-5 px-6 md:px-8 py-4 hover:bg-blue-50/35 transition-colors group cursor-default"
+                transition={{ delay: i * 0.035, duration: 0.28 }}
+                className="group flex items-center gap-4 px-6 md:px-8 py-4 hover:bg-indigo-50/30 hover:border-l-2 hover:border-l-indigo-400 transition-all cursor-default"
               >
-                {/* Mini fit bar */}
-                <div className="flex-shrink-0 hidden sm:flex flex-col items-center gap-1.5 w-12">
-                  <span className={`text-sm font-bold ${s.text}`}>{p.fitScore}%</span>
-                  <div className="w-full h-1.5 rounded-full bg-gray-100 overflow-hidden">
-                    <motion.div
-                      className="h-full rounded-full"
-                      style={{ background: s.bar }}
-                      initial={{ width: 0 }}
-                      animate={{ width: `${p.fitScore}%` }}
-                      transition={{
-                        duration: 0.9,
-                        ease: [0.16, 1, 0.3, 1],
-                        delay: i * 0.05,
-                      }}
+                {/* Circular match ring */}
+                <div className="shrink-0 hidden sm:block">
+                  <svg width="44" height="44" viewBox="0 0 44 44">
+                    <circle cx="22" cy="22" r={R} fill="none" stroke="#f1f5f9" strokeWidth="3.5"/>
+                    <circle cx="22" cy="22" r={R} fill="none" stroke={s.bar} strokeWidth="3.5"
+                      strokeDasharray={`${dash} ${C}`} strokeLinecap="round"
+                      transform="rotate(-90 22 22)"
+                      style={{ transition: "stroke-dasharray 0.9s cubic-bezier(0.16,1,0.3,1)" }}
                     />
-                  </div>
+                    <text x="22" y="26" textAnchor="middle" fontSize="9" fontWeight="700" fill={s.bar} style={{ fontVariantNumeric: "tabular-nums" }}>
+                      {p.fitScore}%
+                    </text>
+                  </svg>
                 </div>
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center flex-wrap gap-2 mb-0.5">
-                    <p className="text-sm font-semibold text-gray-900 group-hover:text-blue-700 transition-colors">
+                  <div className="flex items-center flex-wrap gap-1.5 mb-1">
+                    <p className="text-sm font-semibold text-slate-900 group-hover:text-indigo-700 transition-colors truncate">
                       {p.name}
                     </p>
-                    <span className="text-[10px] font-bold uppercase tracking-wide text-blue-600 bg-blue-50 rounded-full px-2 py-0.5 border border-blue-100">
+                    <span className="text-[9px] font-bold uppercase tracking-widest text-indigo-600 bg-indigo-50 rounded-full px-2 py-0.5 border border-indigo-100 shrink-0">
                       {p.level}
                     </span>
                     {p.scholarshipAvailable && (
-                      <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 rounded-full px-2 py-0.5 border border-emerald-100">
+                      <span className="text-[9px] font-bold uppercase tracking-widest text-teal-600 bg-teal-50 rounded-full px-2 py-0.5 border border-teal-100 shrink-0">
                         Scholarship
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-gray-500 flex flex-wrap gap-x-3">
-                    {p.field && <span>🎓 {p.field}</span>}
-                    {p.language && <span>🌐 {p.language}</span>}
-                    {p.durationMonths > 0 && <span>⏱ {p.durationMonths / 12} yr{p.durationMonths / 12 !== 1 ? "s" : ""}</span>}
-                    {p.deliveryMode && p.deliveryMode !== "on-campus" && (
-                      <span className="capitalize">📡 {p.deliveryMode}</span>
-                    )}
+                  <p className="text-[11px] text-slate-400 flex flex-wrap gap-x-3">
+                    {p.field    && <span>{p.field}</span>}
+                    {p.language && <span>· {p.language}</span>}
+                    {p.durationMonths > 0 && <span>· {p.durationMonths / 12}yr</span>}
+                    {p.deliveryMode && p.deliveryMode !== "on-campus" && <span className="capitalize">· {p.deliveryMode}</span>}
                   </p>
                 </div>
 
                 {/* Tuition */}
-                <div className="flex-shrink-0 text-right">
-                  <p className="text-sm font-bold text-gray-800 tabular-nums">
-                    {p.tuitionUsdPerYear > 0
-                      ? `$${p.tuitionUsdPerYear.toLocaleString()}/yr`
-                      : "Free"}
+                <div className="shrink-0 text-right">
+                  <p className="font-mono text-sm font-bold text-slate-800 tabular-nums">
+                    {p.tuitionUsdPerYear > 0 ? `$${p.tuitionUsdPerYear.toLocaleString()}/yr` : "Free"}
                   </p>
                   {budgetUsdPerYear && p.tuitionUsdPerYear > 0 && (
-                    <p
-                      className={`text-[10px] font-semibold ${
-                        p.tuitionUsdPerYear <= budgetUsdPerYear
-                          ? "text-emerald-600"
-                          : "text-red-400"
-                      }`}
-                    >
-                      {p.tuitionUsdPerYear <= budgetUsdPerYear
-                        ? "Within budget"
-                        : "Over budget"}
+                    <p className={`text-[10px] font-semibold ${p.tuitionUsdPerYear <= budgetUsdPerYear ? "text-teal-600" : "text-rose-400"}`}>
+                      {p.tuitionUsdPerYear <= budgetUsdPerYear ? "✓ budget" : "over budget"}
                     </p>
                   )}
                 </div>
-
-                {/* Mobile fit badge */}
-                <span
-                  className={`flex-shrink-0 text-xs font-bold rounded-full px-2.5 py-1 sm:hidden ${s.bg} ${s.text}`}
-                >
-                  {p.fitScore}%
-                </span>
               </motion.li>
             );
           })}
         </AnimatePresence>
         {filtered.length === 0 && (
-          <li className="px-8 py-12 text-center text-sm text-gray-400">
-            No programs match your filters.
-          </li>
+          <li className="px-8 py-14 text-center text-sm text-slate-400">No programs match your filters.</li>
         )}
       </ul>
 
-      {/* Show more / less */}
+      {/* ── Show more */}
       {filtered.length > 5 && (
-        <div className="px-6 md:px-8 py-5 border-t border-gray-100 text-center">
+        <div className="px-8 py-4 border-t border-slate-100 text-center">
           <button
             type="button"
             onClick={() => setShowAll((v) => !v)}
-            className="text-sm text-blue-600 font-semibold hover:text-blue-800 transition-colors"
+            className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors"
           >
             {showAll ? "Show less ↑" : `Show all ${filtered.length} programs ↓`}
           </button>

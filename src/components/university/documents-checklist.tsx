@@ -8,16 +8,20 @@ interface DocumentsChecklistProps {
   docs: IStudentDocument[];
 }
 
-async function uploadDoc(docId: string, file: File): Promise<boolean> {
+async function uploadDoc(
+  docId: string,
+  file: File,
+): Promise<{ ok: boolean; url?: string; fileName?: string }> {
   try {
-    const res = await fetch(`/api/documents/${docId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: "uploaded", fileName: file.name }),
-    });
-    return res.ok;
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("docId", docId);
+    const res = await fetch("/api/documents/upload", { method: "POST", body: fd });
+    if (!res.ok) return { ok: false };
+    const data = (await res.json()) as { url?: string; fileName?: string };
+    return { ok: true, url: data.url, fileName: data.fileName };
   } catch {
-    return false;
+    return { ok: false };
   }
 }
 
@@ -69,17 +73,41 @@ const GROUP_META: Record<
 export function DocumentsChecklist({ docs: initialDocs }: DocumentsChecklistProps) {
   const [docs, setDocs] = React.useState<IStudentDocument[]>(initialDocs);
   const [uploading, setUploading] = React.useState<Record<string, boolean>>({});
+  const [verifying, setVerifying] = React.useState<Record<string, boolean>>({});
+  const [verifyReason, setVerifyReason] = React.useState<Record<string, string>>({});
   const fileRefs = React.useRef<Record<string, HTMLInputElement | null>>({});
+
+  async function handleVerify(docId: string) {
+    setVerifying((p) => ({ ...p, [docId]: true }));
+    setVerifyReason((p) => ({ ...p, [docId]: "" }));
+    try {
+      const res = await fetch(`/api/documents/${docId}/verify`, { method: "POST" });
+      const data = (await res.json()) as { status?: string; verified?: boolean; reason?: string; error?: string };
+      if (res.ok && data.status) {
+        setDocs((prev) =>
+          prev.map((d) => d.id === docId ? { ...d, status: data.status as IStudentDocument["status"] } : d),
+        );
+        setVerifyReason((p) => ({ ...p, [docId]: data.reason ?? "" }));
+      } else {
+        setVerifyReason((p) => ({ ...p, [docId]: data.error ?? "Verification failed." }));
+      }
+    } catch {
+      setVerifyReason((p) => ({ ...p, [docId]: "Network error. Try again." }));
+    }
+    setVerifying((p) => ({ ...p, [docId]: false }));
+  }
 
   async function handleFileChange(docId: string, e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading((p) => ({ ...p, [docId]: true }));
-    const ok = await uploadDoc(docId, file);
-    if (ok) {
+    const result = await uploadDoc(docId, file);
+    if (result.ok) {
       setDocs((prev) =>
         prev.map((d) =>
-          d.id === docId ? { ...d, status: "uploaded" as const, fileName: file.name } : d,
+          d.id === docId
+            ? { ...d, status: "uploaded" as const, fileName: result.fileName ?? file.name, url: result.url }
+            : d,
         ),
       );
     }
@@ -98,21 +126,21 @@ export function DocumentsChecklist({ docs: initialDocs }: DocumentsChecklistProp
   };
 
   return (
-    <section className="bg-white rounded-3xl border border-gray-100 shadow-sm p-6 md:p-8">
+    <section className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-800 shadow-sm p-6 md:p-8">
       <p className="text-xs uppercase tracking-wider text-blue-500 font-semibold mb-0.5">
         Documents
       </p>
-      <h2 className="text-lg font-bold text-gray-900 mb-5">Application Checklist</h2>
+      <h2 className="text-lg font-bold text-gray-900 dark:text-slate-100 mb-5">Application Checklist</h2>
 
       {/* Progress bar */}
       <div className="mb-6">
         <div className="flex items-center justify-between text-xs mb-1.5">
-          <span className="text-gray-500">
+          <span className="text-gray-500 dark:text-slate-400">
             {readyCount} of {total} documents verified
           </span>
-          <span className="font-bold text-gray-700">{pct}%</span>
+          <span className="font-bold text-gray-700 dark:text-slate-200">{pct}%</span>
         </div>
-        <div className="h-2.5 rounded-full bg-gray-100 overflow-hidden">
+        <div className="h-2.5 rounded-full bg-gray-100 dark:bg-slate-800 overflow-hidden">
           <motion.div
             className="h-full rounded-full bg-gradient-to-r from-blue-500 to-emerald-500"
             initial={{ width: 0 }}
@@ -143,7 +171,7 @@ export function DocumentsChecklist({ docs: initialDocs }: DocumentsChecklistProp
                     initial={{ opacity: 0, x: -8 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: i * 0.05, duration: 0.3 }}
-                    className="flex items-center justify-between gap-3 rounded-2xl px-4 py-3 border border-gray-100 hover:border-blue-100 hover:bg-blue-50/25 transition-all group"
+                    className="flex items-center justify-between gap-3 rounded-2xl px-4 py-3 border border-gray-100 dark:border-slate-800 hover:border-blue-100 dark:hover:border-blue-500/30 hover:bg-blue-50/25 dark:hover:bg-blue-950/20 transition-all group"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <span
@@ -156,12 +184,23 @@ export function DocumentsChecklist({ docs: initialDocs }: DocumentsChecklistProp
                         {meta.icon}
                       </span>
                       <div className="min-w-0">
-                        <p className="text-sm font-medium text-gray-800 capitalize">
+                        <p className="text-sm font-medium text-gray-800 dark:text-slate-100 capitalize">
                           {d.kind.replace(/_/g, " ")}
                         </p>
-                        {d.fileName && (
-                          <p className="text-[10px] text-gray-400 truncate">{d.fileName}</p>
-                        )}
+                        {d.fileName ? (
+                          d.url ? (
+                            <a
+                              href={d.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[10px] text-blue-500 hover:underline truncate block"
+                            >
+                              {d.fileName}
+                            </a>
+                          ) : (
+                            <p className="text-[10px] text-gray-400 dark:text-slate-500 truncate">{d.fileName}</p>
+                          )
+                        ) : null}
                       </div>
                     </div>
 
@@ -183,6 +222,39 @@ export function DocumentsChecklist({ docs: initialDocs }: DocumentsChecklistProp
                           {uploading[d.id] ? "Uploading…" : "Upload"}
                         </button>
                       </>
+                    ) : group === "review" ? (
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <div className="relative">
+                          <button
+                            type="button"
+                            disabled={verifying[d.id]}
+                            onClick={() => handleVerify(d.id)}
+                            className="flex items-center gap-1.5 text-xs text-indigo-600 border border-indigo-200 rounded-xl px-3 py-1.5 hover:bg-indigo-50 font-semibold transition-all active:scale-95 disabled:opacity-50"
+                          >
+                            {verifying[d.id] ? (
+                              <>
+                                <svg className="animate-spin w-3 h-3" viewBox="0 0 24 24" fill="none">
+                                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"/>
+                                </svg>
+                                Verifying…
+                              </>
+                            ) : (
+                              <>
+                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Verify
+                              </>
+                            )}
+                          </button>
+                        </div>
+                        {verifyReason[d.id] && (
+                          <span className="text-[10px] text-gray-500 max-w-[140px] leading-tight hidden group-hover:inline">
+                            {verifyReason[d.id]}
+                          </span>
+                        )}
+                      </div>
                     ) : (
                       <span
                         className={`flex-shrink-0 text-[10px] font-bold rounded-full px-2.5 py-1 ${meta.badgeBg}`}

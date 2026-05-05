@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { PREFERENCE_CATEGORIES, CATEGORY_MAP } from "@/lib/preference-categories";
+import { PREFERENCE_CATEGORIES } from "@/lib/preference-categories";
 import type { UserPreferenceData } from "@/lib/preference-categories";
 
 // Returns all preference categories for the current user (creates missing ones with defaults)

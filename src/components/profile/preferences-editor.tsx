@@ -372,9 +372,9 @@ function CategoryRow({ cfg, values, onAdd, onDelete }: CategoryRowProps) {
           >
             <div className="px-4 pb-3 flex flex-col gap-2">
               {/* Example chips */}
-              {cfg.examples && inputVal === "" && (
+              {cfg.options && inputVal === "" && (
                 <div className="flex flex-wrap gap-1">
-                  {cfg.examples.map((ex) => (
+                  {cfg.options.map((ex) => (
                     <button
                       key={ex}
                       type="button"

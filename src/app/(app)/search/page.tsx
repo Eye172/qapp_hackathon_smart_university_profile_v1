@@ -157,7 +157,8 @@ export default function SearchPage() {
   function toggleTag(tag: string) {
     setSelectedTags((prev) => {
       const next = new Set(prev);
-      next.has(tag) ? next.delete(tag) : next.add(tag);
+      if (next.has(tag)) next.delete(tag);
+      else next.add(tag);
       return next;
     });
   }

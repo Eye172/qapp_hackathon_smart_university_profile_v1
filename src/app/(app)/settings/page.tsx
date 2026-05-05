@@ -5,17 +5,19 @@ import { useRouter } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/tailwind-utils";
+import { useSettingsStore, type Language } from "@/store/useSettingsStore";
+import { useTranslation } from "@/lib/i18n";
 
 function Card({ children }: { children: React.ReactNode }) {
-  return <div className="bg-white rounded-2xl border border-gray-100 p-5">{children}</div>;
+  return <div className="bg-[color:var(--color-surface)] rounded-2xl border border-[color:var(--color-border)] p-5">{children}</div>;
 }
 
 function Row({ label, sub, right }: { label: string; sub?: string; right: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-4 py-3 border-b border-gray-50 last:border-0">
+    <div className="flex items-center justify-between gap-4 py-3 border-b border-[color:var(--color-border)] last:border-0">
       <div>
-        <p className="text-[13px] font-medium text-gray-800">{label}</p>
-        {sub && <p className="text-[11px] text-gray-400 mt-0.5">{sub}</p>}
+        <p className="text-[13px] font-medium text-[color:var(--color-text)]">{label}</p>
+        {sub && <p className="text-[11px] text-[color:var(--color-muted)] mt-0.5">{sub}</p>}
       </div>
       <div className="shrink-0">{right}</div>
     </div>
@@ -23,7 +25,7 @@ function Row({ label, sub, right }: { label: string; sub?: string; right: React.
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
-  return <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2 px-1">{children}</p>;
+  return <p className="text-[10px] font-semibold text-[color:var(--color-muted)] uppercase tracking-wider mb-2 px-1">{children}</p>;
 }
 
 function SignOutModal({ onClose, onConfirm }: { onClose: () => void; onConfirm: () => void }) {
@@ -47,8 +49,8 @@ function SignOutModal({ onClose, onConfirm }: { onClose: () => void; onConfirm: 
               stroke="#ef4444" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </div>
-        <h3 className="text-[15px] font-semibold text-center mb-1">Sign out?</h3>
-        <p className="text-[12px] text-gray-400 text-center mb-5">
+        <h3 className="text-[15px] font-semibold text-center mb-1 text-[color:var(--color-text)]">Sign out?</h3>
+        <p className="text-[12px] text-[color:var(--color-muted)] text-center mb-5">
           You&apos;ll need to sign in again to access your profile.
         </p>
         <div className="flex gap-2">
@@ -66,11 +68,19 @@ function SignOutModal({ onClose, onConfirm }: { onClose: () => void; onConfirm: 
   );
 }
 
+const LANGS: { code: Language; label: string }[] = [
+  { code: "en", label: "ENG" },
+  { code: "ru", label: "RUS" },
+  { code: "kz", label: "KAZ" },
+];
+
 export default function SettingsPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const [showSignOut, setShowSignOut] = React.useState(false);
   const [copied, setCopied] = React.useState(false);
+  const { language, theme, setLanguage, toggleTheme } = useSettingsStore();
+  const t = useTranslation();
 
   async function handleSignOut() {
     await signOut({ redirect: false });
@@ -88,10 +98,10 @@ export default function SettingsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-[color:var(--color-bg)]">
       <header className="px-8 pt-7 pb-6">
-        <h1 className="text-[22px] font-semibold text-gray-900 tracking-tight leading-none">Settings</h1>
-        <p className="text-[11px] text-gray-400 mt-1">Account &amp; preferences</p>
+        <h1 className="text-[22px] font-semibold text-[color:var(--color-text)] tracking-tight leading-none">{t.settings.title}</h1>
+        <p className="text-[11px] text-[color:var(--color-muted)] mt-1">{t.settings.subtitle}</p>
       </header>
 
       <div className="h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent mx-6 mb-6" />
@@ -100,30 +110,78 @@ export default function SettingsPage() {
 
         {/* Account */}
         <div>
-          <SectionLabel>Account</SectionLabel>
+          <SectionLabel>{t.settings.account}</SectionLabel>
           <Card>
             <Row
-              label="Email"
-              sub="Your sign-in address"
+              label={t.settings.email}
+              sub={t.settings.emailSub}
               right={
                 <button type="button" onClick={copyEmail}
                   className={cn(
                     "text-[11px] font-medium rounded-lg px-2.5 py-1 transition-all",
-                    copied ? "bg-green-50 text-green-600" : "bg-gray-100 text-gray-600 hover:bg-blue-50 hover:text-blue-600",
+                    copied ? "bg-green-50 text-green-600" : "bg-[color:var(--color-bg)] text-[color:var(--color-muted)] hover:bg-[color:var(--color-accent)]/10 hover:text-[color:var(--color-accent)]",
                   )}>
                   {copied ? "Copied ✓" : (session?.user?.email ?? "—")}
                 </button>
               }
             />
             <Row
-              label="Status"
+              label={t.settings.status}
               right={
                 <span className={cn(
                   "text-[11px] font-semibold rounded-full px-2.5 py-1",
-                  status === "authenticated" ? "bg-green-50 text-green-700" : "bg-gray-100 text-gray-500",
+                  status === "authenticated" ? "bg-green-50 text-green-700" : "bg-[color:var(--color-bg)] text-[color:var(--color-muted)]",
                 )}>
-                  {status === "authenticated" ? "Active" : status}
+                  {status === "authenticated" ? t.settings.statusActive : status}
                 </span>
+              }
+            />
+          </Card>
+        </div>
+
+        {/* Language */}
+        <div>
+          <SectionLabel>{t.settings.language}</SectionLabel>
+          <Card>
+            <Row
+              label={t.settings.language}
+              sub={t.settings.languageSub}
+              right={
+                <div className="flex gap-1">
+                  {LANGS.map(({ code, label }) => (
+                    <button
+                      key={code}
+                      type="button"
+                      onClick={() => setLanguage(code)}
+                      className={cn(
+                        "text-[10px] font-bold rounded-lg px-2.5 py-1.5 transition-all",
+                        language === code
+                          ? "bg-[color:var(--color-accent)] text-white shadow-sm"
+                          : "bg-[color:var(--color-bg)] text-[color:var(--color-muted)] hover:text-[color:var(--color-accent)]",
+                      )}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              }
+            />
+            <Row
+              label={t.settings.theme}
+              sub={t.settings.themeSub}
+              right={
+                <button
+                  type="button"
+                  onClick={toggleTheme}
+                  className={cn(
+                    "flex items-center gap-1.5 text-[11px] font-semibold rounded-xl px-3 py-1.5 transition-all",
+                    theme === "dark"
+                      ? "bg-slate-800 text-slate-200 border border-slate-700"
+                      : "bg-amber-50 text-amber-700 border border-amber-100",
+                  )}
+                >
+                  {theme === "dark" ? "🌙 " + t.settings.themeDark : "☀️ " + t.settings.themeLight}
+                </button>
               }
             />
           </Card>
@@ -131,24 +189,24 @@ export default function SettingsPage() {
 
         {/* App */}
         <div>
-          <SectionLabel>Application</SectionLabel>
+          <SectionLabel>{t.settings.application}</SectionLabel>
           <Card>
             <Row
-              label="Version"
+              label={t.settings.version}
               sub="QApp Smart University Profile"
-              right={<span className="text-[11px] text-gray-400 font-mono">v0.1.0-beta</span>}
+              right={<span className="text-[11px] text-[color:var(--color-muted)] font-mono">v0.1.0-beta</span>}
             />
             <Row
-              label="Data"
-              sub="University database"
-              right={<span className="text-[11px] text-gray-400">Live · Prisma</span>}
+              label={t.settings.data}
+              sub={t.settings.dataSub}
+              right={<span className="text-[11px] text-[color:var(--color-muted)]">Live · Prisma</span>}
             />
             <Row
-              label="AI Engine"
-              sub="Fit scoring & recommendations"
+              label={t.settings.aiEngine}
+              sub={t.settings.aiEngineSub}
               right={
-                <span className="text-[11px] font-semibold rounded-full px-2.5 py-1 bg-blue-50 text-blue-700">
-                  Anthropic Claude
+                <span className="text-[11px] font-semibold rounded-full px-2.5 py-1 bg-green-50 text-green-700">
+                  OpenAI GPT-4o
                 </span>
               }
             />
@@ -157,33 +215,30 @@ export default function SettingsPage() {
 
         {/* About */}
         <div>
-          <SectionLabel>About</SectionLabel>
+          <SectionLabel>{t.settings.about}</SectionLabel>
           <Card>
             <div className="py-2 space-y-1">
-              <p className="text-[13px] font-semibold text-gray-900">QApp — Smart University Profile</p>
-              <p className="text-[12px] text-gray-500 leading-relaxed">
-                AI-powered university recommendation engine. Analyzes your academic profile, preferences,
-                and priorities to surface the best-fit universities worldwide.
-              </p>
-              <p className="text-[11px] text-gray-400 mt-2">Built for QApp Impact Hackathon 2026.</p>
+              <p className="text-[13px] font-semibold text-[color:var(--color-text)]">QApp — Smart University Profile</p>
+              <p className="text-[12px] text-[color:var(--color-muted)] leading-relaxed">{t.settings.aboutDesc}</p>
+              <p className="text-[11px] text-[color:var(--color-muted)] mt-2">{t.settings.aboutBuilt}</p>
             </div>
           </Card>
         </div>
 
-        {/* Danger zone */}
+        {/* Session */}
         <div>
-          <SectionLabel>Session</SectionLabel>
+          <SectionLabel>{t.settings.session}</SectionLabel>
           <Card>
             <Row
-              label="Sign out"
-              sub="End your current session"
+              label={t.settings.signOut}
+              sub={t.settings.signOutSub}
               right={
                 <button
                   type="button"
                   onClick={() => setShowSignOut(true)}
                   className="h-8 px-4 rounded-xl bg-red-50 text-red-600 text-[12px] font-semibold hover:bg-red-100 transition-colors"
                 >
-                  Sign out
+                  {t.settings.signOut}
                 </button>
               }
             />

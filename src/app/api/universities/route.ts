@@ -7,6 +7,9 @@ function parseUniversity(u: {
   id: string;
   name: string;
   nameRu: string | null;
+  nameKz: string | null;
+  descriptionRu: string | null;
+  descriptionKz: string | null;
   country: string;
   city: string;
   founded: number | null;
@@ -39,6 +42,9 @@ function parseUniversity(u: {
     id: u.id,
     name: u.name,
     nameRu: u.nameRu ?? undefined,
+    nameKz: u.nameKz ?? undefined,
+    descriptionRu: u.descriptionRu ?? undefined,
+    descriptionKz: u.descriptionKz ?? undefined,
     country: u.country,
     city: u.city,
     founded: u.founded ?? undefined,
@@ -74,9 +80,8 @@ function parseUniversity(u: {
 export async function GET() {
   const session = await auth();
 
-  const universities = await db.university.findMany({
-    orderBy: { fitScore: "desc" },
-  });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const universities = await db.university.findMany({ orderBy: { fitScore: "desc" } }) as any[];
 
   const parsed = universities.map(parseUniversity);
 

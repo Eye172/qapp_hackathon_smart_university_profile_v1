@@ -3,6 +3,7 @@ import { Geist, Playfair_Display } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { SessionProvider } from "@/components/app/session-provider";
+import { ThemeApplier } from "@/components/app/theme-applier";
 import "./globals.css";
 import { cn } from "@/lib/tailwind-utils";
 
@@ -34,10 +35,11 @@ export default function RootLayout({
       <body
         className={cn(
           "min-h-screen antialiased font-sans",
-          "bg-gray-50 text-gray-900",
+          "bg-[color:var(--color-bg)] text-[color:var(--color-text)]",
         )}
       >
         <SessionProvider>
+          <ThemeApplier />
           {children}
         </SessionProvider>
         <Analytics />
