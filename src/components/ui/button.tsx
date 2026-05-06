@@ -17,11 +17,18 @@ export const buttonVariants = cva(
   {
     variants: {
       variant: {
-        primary: "bg-blue-600 text-white hover:bg-blue-700 shadow-sm shadow-blue-200",
+        primary:
+          "text-white transition-all"
+          + " [background:linear-gradient(135deg,#0a1840_0%,#1e3a8a_40%,#2463eb_100%)]"
+          + " [box-shadow:0_4px_18px_rgba(36,99,235,0.35),inset_0_1px_0_rgba(255,255,255,0.14)]"
+          + " hover:[box-shadow:0_6px_28px_rgba(36,99,235,0.45),inset_0_1px_0_rgba(255,255,255,0.18)]",
         glass:
-          "bg-white/80 backdrop-blur-md text-gray-800 border border-white/60 hover:bg-white/95",
+          "bg-white/78 backdrop-blur-md border border-white/50 hover:bg-white/92"
+          + " [box-shadow:0_2px_12px_rgba(36,99,235,0.07)]"
+          + " text-[color:var(--color-text)]",
         outline:
-          "border border-blue-600 text-blue-600 bg-transparent hover:bg-blue-600/8",
+          "border border-[rgba(36,99,235,0.35)] text-[color:var(--color-accent)] bg-transparent"
+          + " hover:bg-[rgba(36,99,235,0.07)] hover:border-[color:var(--color-accent)]",
       },
       size: {
         sm: "h-8 px-3 text-[length:var(--text-fluid-xs)]",

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
+import { QAppWordmark } from "@/components/ui/qapp-logo";
 
 import { StepIndicator, type Step } from "@/components/registration/step-indicator";
 import { StepAccount } from "@/components/registration/step-account";
@@ -62,7 +63,7 @@ export default function RegisterPage() {
 
     try {
       // 1. Register
-      const regRes = await fetch("/api/auth/register", {
+      const regRes = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
@@ -184,11 +185,9 @@ export default function RegisterPage() {
   return (
     <div className="w-full max-w-md flex flex-col gap-8">
         {/* Wordmark */}
-        <div className="text-center">
-          <span className="text-2xl font-bold tracking-tight text-[color:var(--color-text)]">
-            Q<span className="text-[color:var(--color-accent)]">App</span>
-          </span>
-          <p className="mt-1 text-[13px] text-[color:var(--color-muted)]">
+        <div className="text-center flex flex-col items-center gap-2">
+          <QAppWordmark size={34} color="#3AABF5" />
+          <p className="text-[13px]" style={{ color: "var(--color-muted)" }}>
             {step === 1
               ? "Create your account"
               : step === 2
@@ -198,7 +197,15 @@ export default function RegisterPage() {
         </div>
 
         {/* Card */}
-        <div className="bg-[color:var(--color-surface)] border border-[color:var(--color-border)] rounded-2xl p-6 flex flex-col gap-6 shadow-sm">
+        <div
+          className="rounded-3xl p-7 flex flex-col gap-6"
+          style={{
+            background: "rgba(255,255,255,0.82)",
+            backdropFilter: "blur(28px) saturate(180%)",
+            border: "1px solid rgba(36,99,235,0.14)",
+            boxShadow: "0 8px 48px rgba(36,99,235,0.10), 0 24px 80px rgba(6,14,40,0.08), inset 0 1px 0 rgba(255,255,255,0.90)",
+          }}
+        >
           {/* Step indicator */}
           <StepIndicator steps={STEPS} current={step} />
 

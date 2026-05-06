@@ -47,23 +47,27 @@ export default function LoginPage() {
   return (
     <section
       className={cn(
-        "w-full max-w-md p-8 rounded-3xl shadow-glass",
-        "bg-white/85 backdrop-blur-md border border-[color:var(--color-border)]",
-        "space-y-6",
+        "w-full max-w-md p-9 rounded-3xl space-y-7",
       )}
+      style={{
+        background: "rgba(255,255,255,0.82)",
+        backdropFilter: "blur(28px) saturate(180%)",
+        border: "1px solid rgba(36,99,235,0.14)",
+        boxShadow: "0 8px 48px rgba(36,99,235,0.10), 0 24px 80px rgba(6,14,40,0.08), inset 0 1px 0 rgba(255,255,255,0.90)",
+      }}
     >
-      <header className="space-y-1 text-center">
-        <h1 className="font-display text-[length:var(--text-fluid-2xl)]">
+      <header className="space-y-1.5 text-center">
+        <h1 className="font-display text-[length:var(--text-fluid-2xl)]" style={{ color: "#0d1635" }}>
           Welcome back
         </h1>
-        <p className="text-[length:var(--text-fluid-sm)] text-[color:var(--color-muted)]">
+        <p className="text-[length:var(--text-fluid-sm)]" style={{ color: "var(--color-muted)" }}>
           Sign in to QApp
         </p>
       </header>
 
       <form className="space-y-3" onSubmit={handleSubmit}>
         <label className="block">
-          <span className="text-[length:var(--text-fluid-xs)] text-[color:var(--color-muted)]">
+          <span className="text-[length:var(--text-fluid-xs)] font-medium" style={{ color: "var(--color-muted)" }}>
             Email
           </span>
           <input
@@ -71,16 +75,13 @@ export default function LoginPage() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className={cn(
-              "mt-1 w-full rounded-2xl border border-[color:var(--color-border)]",
-              "bg-white/80 px-4 py-2.5 text-[length:var(--text-fluid-sm)] outline-none",
-              "focus:border-[color:var(--color-accent)] focus:ring-2 focus:ring-[color:var(--color-accent)]/20",
-            )}
+            className="mt-1.5 w-full rounded-2xl px-4 py-3 text-[length:var(--text-fluid-sm)] outline-none premium-input"
+            style={{ border: "1px solid rgba(36,99,235,0.14)", color: "var(--color-text)" }}
           />
         </label>
 
         <label className="block">
-          <span className="text-[length:var(--text-fluid-xs)] text-[color:var(--color-muted)]">
+          <span className="text-[length:var(--text-fluid-xs)] font-medium" style={{ color: "var(--color-muted)" }}>
             Password
           </span>
           <input
@@ -88,11 +89,8 @@ export default function LoginPage() {
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className={cn(
-              "mt-1 w-full rounded-2xl border border-[color:var(--color-border)]",
-              "bg-white/80 px-4 py-2.5 text-[length:var(--text-fluid-sm)] outline-none",
-              "focus:border-[color:var(--color-accent)] focus:ring-2 focus:ring-[color:var(--color-accent)]/20",
-            )}
+            className="mt-1.5 w-full rounded-2xl px-4 py-3 text-[length:var(--text-fluid-sm)] outline-none premium-input"
+            style={{ border: "1px solid rgba(36,99,235,0.14)", color: "var(--color-text)" }}
           />
         </label>
 

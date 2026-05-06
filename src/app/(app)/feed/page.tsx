@@ -4,6 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { HorizontalFeedNode } from "@/components/feed/horizontal-feed-node";
+import { WireframeSphere } from "@/components/ui/qapp-logo";
 import type { IUniversityProfile } from "@/lib/types";
 import { useAlgorithmStore } from "@/store/useAlgorithmStore";
 import { useSessionStore } from "@/store/useSessionStore";
@@ -27,9 +28,9 @@ const SLOT_CONFIG: Record<
 
 const SPRING = {
   type: "spring" as const,
-  stiffness: 100,
-  damping: 20,
-  mass: 1.0,
+  stiffness: 68,
+  damping: 19,
+  mass: 0.80,
 };
 
 /* ─── Skeleton ───────────────────────────────────────────────────────────── */
@@ -67,9 +68,10 @@ function NavDot({ active, onClick }: { active: boolean; onClick: () => void }) {
       type="button"
       aria-label="Go to slide"
       onClick={onClick}
-      animate={{ width: active ? 20 : 6, opacity: active ? 1 : 0.35 }}
-      transition={{ type: "spring", stiffness: 400, damping: 28 }}
-      className="h-1.5 rounded-full bg-blue-600 origin-left"
+      animate={{ width: active ? 22 : 6, opacity: active ? 1 : 0.32 }}
+      transition={{ type: "spring", stiffness: 320, damping: 26 }}
+      className="h-1.5 rounded-full origin-left"
+      style={{ background: active ? "linear-gradient(90deg,#1e3a8a,#2463eb)" : "rgba(36,99,235,0.38)" }}
     />
   );
 }
@@ -174,30 +176,32 @@ export default function FeedPage() {
   }>;
 
   return (
-    <main className="h-screen flex flex-col overflow-hidden bg-[color:var(--color-bg)] relative">
+    <main className="h-screen flex flex-col overflow-hidden premium-page relative">
 
-      {/* ── Wavy pattern background ─────────────────────────────── */}
-      <div className="pointer-events-none absolute inset-0 bg-pattern-waves" aria-hidden />
-
-      {/* ── Ambient glow ────────────────────────────────────────── */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] rounded-full opacity-[0.07]"
-        style={{ background: "radial-gradient(ellipse, rgba(37,99,235,1) 0%, transparent 70%)" }}
-      />
+      {/* ── Background decor ─────────────────────────────────── */}
+      <div className="pointer-events-none absolute inset-0" aria-hidden>
+        <div className="absolute inset-0 bg-pattern-waves" />
+        <div className="absolute inset-0 bg-pattern-dots opacity-40" />
+        <div
+          className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] rounded-full animate-pulse-glow"
+          style={{ background: "radial-gradient(ellipse, rgba(36,99,235,0.13) 0%, transparent 68%)" }}
+        />
+        <WireframeSphere size={280} color="#1e3a8a" opacity={0.05} className="absolute -bottom-12 -right-10 animate-spin-slow" />
+        <WireframeSphere size={160} color="#2463eb" opacity={0.04} className="absolute top-10 -left-6" />
+      </div>
 
       {/* ── Header ──────────────────────────────────────────────── */}
       <header className="shrink-0 flex items-center justify-between px-8 pt-7 pb-4 relative z-10">
         <div>
-          <h1 className="font-display text-[22px] leading-none text-gray-900 tracking-tight">
+          <h1 className="font-display text-[22px] leading-none tracking-tight" style={{ color: "var(--color-text)" }}>
             Discover
           </h1>
-          <p className="text-[11px] text-gray-400 mt-1 font-medium">
+          <p className="text-[11px] mt-1 font-medium" style={{ color: "var(--color-muted)" }}>
             {loading ? (
-              <span className="inline-block w-32 h-3 rounded bg-gray-200 animate-pulse" />
+              <span className="inline-block w-32 h-3 rounded animate-pulse" style={{ background: "var(--color-border)" }} />
             ) : (
               <>
-                <span className="text-blue-600 font-semibold">{visible.length}</span>
+                <span className="font-semibold" style={{ color: "var(--color-accent)" }}>{visible.length}</span>
                 {" "}universities · sorted by AI fit
               </>
             )}
@@ -205,15 +209,15 @@ export default function FeedPage() {
         </div>
 
         {/* Keyboard hint — desktop only */}
-        <div className="hidden md:flex items-center gap-1.5 text-[10px] text-gray-400 select-none">
-          <span className="border border-gray-200 rounded-md px-1.5 py-0.5 bg-white shadow-sm font-mono">←</span>
-          <span className="border border-gray-200 rounded-md px-1.5 py-0.5 bg-white shadow-sm font-mono">→</span>
+        <div className="hidden md:flex items-center gap-1.5 text-[10px] select-none" style={{ color: "var(--color-muted)" }}>
+          <span className="rounded-md px-1.5 py-0.5 font-mono" style={{ border: "1px solid var(--color-border)", background: "var(--color-surface)", boxShadow: "0 1px 4px rgba(36,99,235,0.08)" }}>←</span>
+          <span className="rounded-md px-1.5 py-0.5 font-mono" style={{ border: "1px solid var(--color-border)", background: "var(--color-surface)", boxShadow: "0 1px 4px rgba(36,99,235,0.08)" }}>→</span>
           <span className="ml-1">navigate</span>
         </div>
       </header>
 
-      {/* ── TOP HORIZONTAL RAIL ─────────────────────────────────── */}
-      <div className="shrink-0 h-px bg-gradient-to-r from-transparent via-blue-200/60 to-transparent mx-6" />
+      {/* ── TOP HORIZONTAL RAIL ─────────────────────────────── */}
+      <div className="shrink-0 h-px mx-6" style={{ background: "linear-gradient(90deg, transparent, rgba(36,99,235,0.22), transparent)" }} />
 
       {/* ── Carousel Stage ──────────────────────────────────────── */}
       <section
@@ -245,28 +249,27 @@ export default function FeedPage() {
           <>
             {/* Perspective container */}
             <div
-              className="relative w-full"
+              className="relative w-full gpu-smooth"
               style={{ height: "72vh", perspective: "1200px" }}
             >
               {slots.map(({ offset, university, config }) => (
                 <motion.div
                   key={university.id}
                   className={cn(
-                    "absolute top-1/2 left-1/2",
+                    "absolute top-1/2 left-1/2 gpu-smooth",
                     offset !== 0 ? "cursor-pointer" : "",
                   )}
                   animate={{
-                    x: config.x,
+                    x: `calc(-50% + ${config.x}px)`,
                     scale: config.scale,
                     opacity: config.opacity,
                     y: "-50%",
                     filter: `blur(${config.blur}px)`,
                   }}
                   style={{
-                    x: config.x,
+                    x: `calc(-50% + ${config.x}px)`,
                     y: "-50%",
                     zIndex: config.zIndex,
-                    translateX: "-50%",
                   }}
                   transition={SPRING}
                   onClick={offset !== 0 ? () => goTo(clampedIndex + offset) : undefined}
@@ -295,15 +298,17 @@ export default function FeedPage() {
               aria-label="Previous"
               onClick={prev}
               disabled={clampedIndex === 0}
-              whileHover={{ scale: 1.08 }}
-              whileTap={{ scale: 0.94 }}
-              className={cn(
-                "absolute left-5 top-1/2 -translate-y-1/2 z-10",
-                "w-9 h-9 flex items-center justify-center rounded-full",
-                "bg-white/90 backdrop-blur-sm border border-gray-200 shadow-md text-gray-700",
-                "transition-opacity duration-200",
-                clampedIndex === 0 ? "opacity-20 cursor-not-allowed" : "hover:border-blue-200 hover:text-blue-600",
-              )}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              className="absolute left-5 top-1/2 -translate-y-1/2 z-10 w-9 h-9 flex items-center justify-center rounded-full backdrop-blur-sm"
+              style={{
+                background: "rgba(255,255,255,0.88)",
+                border: "1px solid rgba(36,99,235,0.18)",
+                boxShadow: "0 2px 12px rgba(36,99,235,0.12)",
+                color: "var(--color-text)",
+                opacity: clampedIndex === 0 ? 0.22 : 1,
+                cursor: clampedIndex === 0 ? "not-allowed" : "pointer",
+              }}
             >
               <ChevL />
             </motion.button>
@@ -313,17 +318,17 @@ export default function FeedPage() {
               aria-label="Next"
               onClick={next}
               disabled={clampedIndex >= visible.length - 1}
-              whileHover={{ scale: 1.08 }}
-              whileTap={{ scale: 0.94 }}
-              className={cn(
-                "absolute right-5 top-1/2 -translate-y-1/2 z-10",
-                "w-9 h-9 flex items-center justify-center rounded-full",
-                "bg-white/90 backdrop-blur-sm border border-gray-200 shadow-md text-gray-700",
-                "transition-opacity duration-200",
-                clampedIndex >= visible.length - 1
-                  ? "opacity-20 cursor-not-allowed"
-                  : "hover:border-blue-200 hover:text-blue-600",
-              )}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              className="absolute right-5 top-1/2 -translate-y-1/2 z-10 w-9 h-9 flex items-center justify-center rounded-full backdrop-blur-sm"
+              style={{
+                background: "rgba(255,255,255,0.88)",
+                border: "1px solid rgba(36,99,235,0.18)",
+                boxShadow: "0 2px 12px rgba(36,99,235,0.12)",
+                color: "var(--color-text)",
+                opacity: clampedIndex >= visible.length - 1 ? 0.22 : 1,
+                cursor: clampedIndex >= visible.length - 1 ? "not-allowed" : "pointer",
+              }}
             >
               <ChevR />
             </motion.button>
@@ -331,14 +336,14 @@ export default function FeedPage() {
         )}
       </section>
 
-      {/* ── BOTTOM HORIZONTAL RAIL ──────────────────────────────── */}
-      <div className="shrink-0 h-px bg-gradient-to-r from-transparent via-blue-200/60 to-transparent mx-6" />
+      {/* ── BOTTOM HORIZONTAL RAIL ────────────────────────────── */}
+      <div className="shrink-0 h-px mx-6" style={{ background: "linear-gradient(90deg, transparent, rgba(36,99,235,0.22), transparent)" }} />
 
-      {/* ── Nav controls ────────────────────────────────────────── */}
+      {/* ── Nav controls ───────────────────────────────────────── */}
       <footer className="shrink-0 flex items-center justify-center gap-3 py-4 px-8 relative z-10">
         {!loading && visible.length > 1 && (
           <>
-            <span className="text-[10px] text-gray-400 tabular-nums w-12 text-right">
+            <span className="text-[10px] tabular-nums w-12 text-right" style={{ color: "var(--color-muted)" }}>
               {clampedIndex + 1} / {visible.length}
             </span>
             <nav className="flex items-center gap-1.5" aria-label="Slide navigation">

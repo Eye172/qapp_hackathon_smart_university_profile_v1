@@ -90,7 +90,7 @@ function UniversityLists({
   unhideNode: (id: string) => void;
 }) {
   return (
-    <section className="bg-white rounded-3xl border border-[color:var(--color-border)] p-6 space-y-4">
+    <section className="glass-ultra rounded-3xl p-7 space-y-4">
       <h2 className="font-display text-[length:var(--text-fluid-xl)]">
         My universities
       </h2>
@@ -333,12 +333,12 @@ export default function ProfilePage() {
 
   const inputCls = cn(
     "rounded-2xl border border-[color:var(--color-border)] px-4 py-2.5",
-    "bg-[color:var(--color-surface)] text-[color:var(--color-text)] text-[length:var(--text-fluid-sm)] outline-none",
+    "premium-input text-[color:var(--color-text)] text-[length:var(--text-fluid-sm)] outline-none",
     "focus:border-[color:var(--color-accent)] focus:ring-2 focus:ring-[color:var(--color-accent)]/20",
   );
 
   return (
-    <main className="min-h-screen pt-8 pb-16 px-6 max-w-4xl mx-auto space-y-8">
+    <main className="min-h-screen premium-page pt-8 pb-16 px-6 max-w-4xl mx-auto space-y-8">
       {/* Header */}
       <header className="space-y-1">
         <h1 className="font-display text-[length:var(--text-fluid-2xl)]">
@@ -350,7 +350,7 @@ export default function ProfilePage() {
       </header>
 
       {/* Academic profile form */}
-      <section className="bg-white rounded-3xl border border-[color:var(--color-border)] p-6 space-y-6">
+      <section className="glass-ultra rounded-3xl p-7 space-y-6">
         <h2 className="font-display text-[length:var(--text-fluid-xl)]">
           Academic profile
         </h2>
@@ -461,7 +461,7 @@ export default function ProfilePage() {
       </section>
 
       {/* Documents */}
-      <section className="bg-white rounded-3xl border border-[color:var(--color-border)] p-6 space-y-4">
+      <section className="glass-ultra rounded-3xl p-7 space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="font-display text-[length:var(--text-fluid-xl)]">Documents</h2>
           <TagPill variant={verified === total ? "success" : "warning"}>
@@ -554,7 +554,7 @@ export default function ProfilePage() {
       />
 
       {/* Preferences & priorities */}
-      <section className="bg-white rounded-3xl border border-[color:var(--color-border)] p-6 space-y-4">
+      <section className="glass-ultra rounded-3xl p-7 space-y-4">
         <div className="space-y-1">
           <h2 className="font-display text-[length:var(--text-fluid-xl)]">
             Preferences &amp; priorities

@@ -139,10 +139,10 @@ function TagChip({ tag, university }: { tag: string; university: IUniversityProf
   const variant = classifyTag(tag, university);
   const cls =
     variant === "match"
-      ? "bg-emerald-500/15 text-emerald-700 ring-1 ring-emerald-500/20"
+      ? "bg-emerald-500/18 text-emerald-300 ring-1 ring-emerald-400/30"
       : variant === "nomatch"
-        ? "bg-red-500/12 text-red-600 ring-1 ring-red-400/20"
-        : "bg-white/15 text-white/90 ring-1 ring-white/20";
+        ? "bg-red-500/15 text-red-300 ring-1 ring-red-400/25"
+        : "bg-white/10 text-white/75 ring-1 ring-white/15";
   return (
     <span className={cn("inline-flex items-center rounded-full px-2 py-[2px] text-[9px] font-semibold tracking-wide leading-none", cls)}>
       {variant === "match" && <span className="mr-0.5 text-emerald-600">✓</span>}
@@ -155,9 +155,12 @@ function TagChip({ tag, university }: { tag: string; university: IUniversityProf
 /* ─── Stat chip ───────────────────────────────────────────────────────────── */
 function StatChip({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex flex-col items-center px-2.5 py-1.5 rounded-xl bg-white/10 ring-1 ring-white/15 min-w-0">
-      <span className="text-[9px] uppercase tracking-wider text-white/55 font-semibold leading-none">{label}</span>
-      <span className="text-[11px] font-bold text-white leading-tight mt-0.5 tabular-nums">{value}</span>
+    <div
+      className="flex flex-col items-center px-2.5 py-1.5 rounded-xl min-w-0"
+      style={{ background: "rgba(36,99,235,0.22)", border: "1px solid rgba(96,165,250,0.18)" }}
+    >
+      <span className="text-[9px] uppercase tracking-wider font-semibold leading-none" style={{ color: "rgba(147,197,253,0.70)" }}>{label}</span>
+      <span className="text-[11px] font-bold leading-tight mt-0.5 tabular-nums text-white">{value}</span>
     </div>
   );
 }
@@ -205,8 +208,8 @@ export const HorizontalFeedNode = React.forwardRef<
     <motion.article
       ref={ref}
       className={cn(
-        "group relative h-[68vh] w-[21rem] rounded-[28px] overflow-hidden select-none",
-        "shadow-[0_20px_60px_-12px_rgba(15,23,42,0.28),0_4px_16px_-4px_rgba(15,23,42,0.18)]",
+        "group relative h-[68vh] w-[21rem] rounded-[28px] overflow-hidden select-none gpu-smooth",
+        "shadow-[0_40px_110px_-32px_rgba(0,60,255,0.40),0_20px_52px_-22px_rgba(4,8,26,0.55),inset_0_1px_0_rgba(255,255,255,0.18)]",
         className,
       )}
       whileHover={isActive ? { y: -4, scale: 1.008 } : undefined}
@@ -227,7 +230,7 @@ export const HorizontalFeedNode = React.forwardRef<
         className="absolute inset-0"
         style={{
           background:
-            "linear-gradient(to top, rgba(8,10,20,0.96) 0%, rgba(8,10,20,0.55) 42%, rgba(8,10,20,0.06) 72%, transparent 100%)",
+            "radial-gradient(ellipse at 48% 16%, rgba(36,99,235,0.22), transparent 36%), linear-gradient(to top, rgba(4,8,26,0.98) 0%, rgba(6,14,40,0.70) 38%, rgba(6,14,40,0.14) 66%, transparent 100%)",
         }}
         aria-hidden
       />
@@ -265,7 +268,7 @@ export const HorizontalFeedNode = React.forwardRef<
 
         <div
           className="px-4 pt-4 pb-4 flex flex-col gap-3"
-          style={{ background: "rgba(8,10,20,0.72)", backdropFilter: "blur(20px) saturate(140%)" }}
+          style={{ background: "rgba(4,8,28,0.78)", backdropFilter: "blur(28px) saturate(170%)" }}
         >
           {/* Name row */}
           <div className="flex items-start justify-between gap-2">
