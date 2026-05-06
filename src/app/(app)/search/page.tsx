@@ -38,7 +38,7 @@ function UniCard({
       exit={{ opacity: 0, y: -4 }}
       whileHover={{ y: -2 }}
       transition={{ type: "spring", stiffness: 340, damping: 26 }}
-      className="group flex items-center gap-4 bg-white rounded-2xl border border-gray-100 px-5 py-4 cursor-pointer hover:border-blue-100 hover:shadow-md transition-shadow duration-200"
+      className="group flex items-center gap-4 glass-ultra rounded-2xl px-5 py-4 cursor-pointer card-lift"
       onClick={() => onNavigate(university.id)}
     >
       {/* Logo / Initials */}
@@ -164,9 +164,10 @@ export default function SearchPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 flex flex-col">
+    <main className="min-h-screen premium-page flex flex-col relative overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 bg-pattern-waves" aria-hidden />
       {/* Header */}
-      <header className="shrink-0 px-8 pt-7 pb-5">
+      <header className="shrink-0 px-8 pt-7 pb-5 relative z-10">
         <h1 className="text-[22px] font-semibold text-gray-900 tracking-tight leading-none">Search</h1>
         <p className="text-[11px] text-gray-400 mt-1">
           {loading ? (
@@ -178,7 +179,7 @@ export default function SearchPage() {
       </header>
 
       {/* Search bar + filter toggle */}
-      <div className="shrink-0 px-8 pb-4 flex gap-3 items-center">
+      <div className="shrink-0 px-8 pb-4 flex gap-3 items-center relative z-10">
         <div className="flex-1 relative">
           <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" width="15" height="15" viewBox="0 0 15 15" fill="none" aria-hidden>
             <circle cx="6.5" cy="6.5" r="4.5" stroke="currentColor" strokeWidth="1.5" />
@@ -189,7 +190,7 @@ export default function SearchPage() {
             placeholder="University name, country, tag…"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="w-full h-10 pl-9 pr-4 rounded-xl bg-white border border-gray-200 text-[13px] text-gray-900 placeholder:text-gray-400 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100 transition-all duration-150"
+            className="w-full h-10 pl-9 pr-4 rounded-xl premium-input border text-[13px] text-gray-900 placeholder:text-gray-400 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
           />
         </div>
         <button
@@ -225,7 +226,7 @@ export default function SearchPage() {
             className="overflow-hidden shrink-0"
           >
             <div className="px-8 pb-4">
-              <div className="bg-white rounded-2xl border border-gray-100 p-4">
+              <div className="glass-ultra rounded-2xl p-4">
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-[11px] font-semibold text-gray-500 uppercase tracking-wide">Filter by tag</p>
                   {selectedTags.size > 0 && (
@@ -265,7 +266,7 @@ export default function SearchPage() {
       <div className="shrink-0 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent mx-6" />
 
       {/* Results list */}
-      <div className="flex-1 overflow-y-auto px-8 py-5">
+      <div className="flex-1 overflow-y-auto px-8 py-5 relative z-10">
         {loading ? (
           <div className="space-y-3">
             {Array.from({ length: 6 }).map((_, i) => (

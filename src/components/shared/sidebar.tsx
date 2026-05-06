@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
+import { QAppIcon } from "@/components/ui/qapp-logo";
 import { AIChatSheet } from "@/components/shared/ai-chat-sheet";
 import {
   Calendar,
@@ -135,12 +136,10 @@ export function GlassSidebar({ expanded, onMouseEnter, onMouseLeave }: GlassSide
       {/* Brand */}
       <Link
         href="/feed"
-        className="flex items-center h-10 px-3.5 mb-5 gap-3 select-none"
+        className="flex items-center h-10 px-3 mb-5 gap-2.5 select-none"
         aria-label="QApp home"
       >
-        <span className="shrink-0 w-[33px] h-[33px] flex items-center justify-center rounded-xl bg-blue-600 text-white text-[15px] font-bold leading-none shadow-md shadow-blue-200">
-          Q
-        </span>
+        <QAppIcon size={34} color="#3AABF5" />
         <AnimatePresence>
           {expanded && (
             <motion.span
@@ -149,9 +148,10 @@ export function GlassSidebar({ expanded, onMouseEnter, onMouseLeave }: GlassSide
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -6 }}
               transition={LABEL_SPRING}
-              className="text-[15px] font-bold text-[color:var(--color-text)] whitespace-nowrap"
+              className="text-[15px] font-semibold whitespace-nowrap"
+              style={{ color: "var(--color-accent)", letterSpacing: "-0.01em" }}
             >
-              App
+              app
             </motion.span>
           )}
         </AnimatePresence>
