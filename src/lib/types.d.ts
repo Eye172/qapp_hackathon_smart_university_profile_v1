@@ -1,0 +1,152 @@
+export type DocumentKind =
+  | "transcript"
+  | "diploma"
+  | "passport"
+  | "ielts"
+  | "toefl"
+  | "sop"
+  | "recommendation"
+  | "cv"
+  | "other";
+
+export type DocumentStatus = "pending" | "uploaded" | "verified" | "rejected";
+
+export interface IStudentDocument {
+  id: string;
+  kind: DocumentKind;
+  fileName: string;
+  uploadedAt: string;
+  status: DocumentStatus;
+  url?: string;
+  sizeBytes?: number;
+}
+
+export interface IIeltsScore {
+  overall: number;
+  listening: number;
+  reading: number;
+  writing: number;
+  speaking: number;
+  takenAt?: string;
+}
+
+export type StudyLevel = "bachelor" | "master" | "phd";
+
+export interface ISatScore {
+  total: number;
+  math: number;
+  evidenceBasedReadingWriting: number;
+  takenAt?: string;
+}
+
+export interface IStudentProfile {
+  id: string;
+  fullName: string;
+  email: string;
+  avatarUrl?: string;
+  nationality: string;
+  currentCountry: string;
+  gradeLevel: number;
+  gpa: number;
+  gpaScale: 4.0 | 5.0 | 10.0 | 100;
+  ielts: IIeltsScore;
+  sat?: ISatScore;
+  interests: string[];
+  preferredCountries: string[];
+  preferredStudyLevel: StudyLevel;
+  budgetUsdPerYear?: number;
+  documents: IStudentDocument[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type ProgramDeliveryMode = "on-campus" | "hybrid" | "online";
+
+export interface IUniversityProgram {
+  id: string;
+  name: string;
+  level: StudyLevel;
+  durationMonths: number;
+  tuitionUsdPerYear: number;
+  language: string;
+  deliveryMode: ProgramDeliveryMode;
+  field: string;
+  scholarshipAvailable: boolean;
+}
+
+export interface IFitScoreBreakdown {
+  academic: number;
+  language: number;
+  financial: number;
+  interest: number;
+}
+
+export interface IUniversityProfile {
+  id: string;
+  name: string;
+  nameRu?: string;
+  nameKz?: string;
+  descriptionRu?: string;
+  descriptionKz?: string;
+  country: string;
+  city: string;
+  founded?: number;
+  type?: string;
+  languages?: string;
+  logoUrl?: string;
+  heroImageUrl?: string;
+  campusPhoto?: string;
+  websiteUrl?: string;
+  contactEmail?: string;
+  worldRank?: number;
+  qsWorldRank?: number;
+  theWorldRank?: number;
+  minGpa?: number;
+  minIelts?: number;
+  minSat?: number;
+  entGrantMin?: number;
+  entPaidMin?: number;
+  entSubject?: string;
+  acceptanceRate?: number;
+  studentFacultyRatio?: number;
+  employmentRate6mo?: number;
+  avgStartingSalaryUsd?: number;
+  campusSizeHa?: number;
+  applicationDeadline?: string;
+  description?: string;
+  fitScore: number;
+  recommendationScore?: number;
+  fitScoreBreakdown?: IFitScoreBreakdown;
+  programs: IUniversityProgram[];
+  tags: string[];
+  photos?: string[];
+  statsTestScores?: Record<string, unknown>;
+  statsDemographics?: {
+    enrollment?: number;
+    undergrad?: number;
+    grad?: number;
+    gender?: { male: number; female: number };
+    diversity?: Record<string, number>;
+    intl_student_pct?: number;
+    first_gen_pct?: number;
+    [key: string]: unknown;
+  };
+  statsFinancials?: {
+    tuition_domestic_usd?: number;
+    tuition_intl_usd?: number;
+    room_board_usd?: number;
+    avg_after_aid_usd?: number;
+    median_earnings_10y_usd?: number;
+    [key: string]: unknown;
+  };
+  statsTopMajors?: Array<{ name: string; percent: number }>;
+  extendedProfile?: {
+    mission?: string;
+    campus_life?: string;
+    housing?: string;
+    career?: string;
+    notable_alumni?: string[];
+    subject_ranks?: Array<{ subject: string; rank: number }>;
+    [key: string]: unknown;
+  };
+}
