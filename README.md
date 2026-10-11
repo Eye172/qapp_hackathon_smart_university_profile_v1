@@ -118,3 +118,8 @@ Use a fresh local database and your own environment values. Personal runtime dat
 [More projects](https://github.com/Eye172) · [Contact](mailto:shakh090909@gmail.com)
 
 This repository presents the product and its engineering. The implementation is published here; private runtime data is excluded. Screenshots and documented experiments are identified in their captions.
+
+
+---
+
+<sub>Account history: Magitcian172 → Eye172 (same developer). [Authorship note](AUTHORSHIP.md).</sub>
