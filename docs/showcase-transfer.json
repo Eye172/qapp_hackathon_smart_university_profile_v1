@@ -1,0 +1,58 @@
+{
+  "from": "Eye172/qapp-showcase",
+  "source_commit": "ddf39df86618cfca8a12e4add3f09d911463ebfb",
+  "files": [
+    {
+      "path": "README.md",
+      "sha256": "bb01ad1d5b84a0d466334da0739e1781681d6218bffb27f03922007408c80420"
+    },
+    {
+      "path": "architecture.svg",
+      "sha256": "06aaeada3834ea47d3d996c736cea85b49988d34b1aabaddbaaaa0cf1cf642bf"
+    },
+    {
+      "path": "cover.svg",
+      "sha256": "65d1308cf1ab4f573883d4e2ebb3a52fc034d7d8c9dd458204cdf1a949f03596"
+    },
+    {
+      "path": "docs/awards/README.md",
+      "sha256": "63b63a88e82474424cf4ec5d1959ac92a04bc509428e9ecfdd9de2aac4379bb9"
+    },
+    {
+      "path": "docs/awards/impact-qintern-second-place.pdf",
+      "sha256": "d709d7843befd8210ca51c0e6b426514b4207b7515d2784862574d043a5cd043"
+    },
+    {
+      "path": "docs/awards/impact-qintern-second-place.png",
+      "sha256": "0ec6fa2572c59c517606f16923ddb38ec6cc7b9dab151231a339cfb81478ab25"
+    },
+    {
+      "path": "docs/awards/manifest.json",
+      "sha256": "c7a0e8876b5ba93e4b2b4c434a9d0873e1838ebf2373d80894e53e47d0553f38"
+    },
+    {
+      "path": "qapp-checklist.png",
+      "sha256": "38aef1154d6f9930d91b7b1144027628c7a2eb219e13aa1f69e9b1a2860cfdde"
+    },
+    {
+      "path": "qapp-discover.png",
+      "sha256": "a4554adff1cf7c1866f2ff08ab30210c63e5a5223a33fe557a423a3c667d3098"
+    },
+    {
+      "path": "qapp-fit.png",
+      "sha256": "9c58cb11f429d4a08be470e90c4ab0600fb0ab47994bd56d01661af5247cdd73"
+    },
+    {
+      "path": "qapp-programs.png",
+      "sha256": "45bcad8de911c947255ad405df970a41978ef5ac9d9f584427ea1ed9ded363da"
+    },
+    {
+      "path": "qapp-search.png",
+      "sha256": "75d075f1a6f974624accce8701b54f5aeea67268bdb5988775f9b43107a6734e"
+    },
+    {
+      "path": "qapp-university.png",
+      "sha256": "e8f469419e2f8b718f3a4688f3fb133ceffc7f126cd92cc87ba45ba3d28007b3"
+    }
+  ]
+}
